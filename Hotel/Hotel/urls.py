@@ -21,6 +21,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from Hotel import settings
 from apps.faces.views import FaceRegisterView
+from apps.users.views import UserLoginView
 import os
 
 API_ROOT = "api/"
@@ -28,5 +29,6 @@ urlpatterns = [
     # 全局配置
     url(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
     path('admin/', admin.site.urls),
-    path(API_ROOT + "face/register/", csrf_exempt(FaceRegisterView.as_view()), name="register"),
+    path(API_ROOT + "face/register/", csrf_exempt(FaceRegisterView.as_view()), name="face_register"),
+    path(API_ROOT + "user/login/", csrf_exempt(UserLoginView.as_view()), name="user_login"),
 ]
