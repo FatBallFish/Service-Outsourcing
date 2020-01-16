@@ -35,4 +35,14 @@ class UsersAdmin(admin.ModelAdmin):
     read_img_small.short_description = "用户头像"
 
 
+class AdminSite(admin.AdminSite):
+    site_title = "酒店视觉AI"  # 页面显示标题
+    site_header = "酒店视觉AI 后台管理"  # 页面头部标题
+
+
+# admin.site.site_title = "酒店视觉AI 后台管理"
+# admin.site.site_header = "酒店视觉AI"
+
+admin.site = AdminSite()
+
 admin.site.register(Users, UsersAdmin)
