@@ -20,11 +20,13 @@ from django.views.static import serve
 from django.views.decorators.csrf import csrf_exempt
 
 from Hotel import settings
-from apps.users.views import RegisterView
+from apps.faces.views import FaceRegisterView
+import os
 
+API_ROOT = "api/"
 urlpatterns = [
     # 全局配置
     url(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
     path('admin/', admin.site.urls),
-    path("api/register/",csrf_exempt(RegisterView.as_view()),name="register"),
+    path(API_ROOT + "face/register/", csrf_exempt(FaceRegisterView.as_view()), name="register"),
 ]

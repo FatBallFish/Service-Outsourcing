@@ -31,6 +31,7 @@ ALLOWED_HOSTS = ["ecc.zustjinzhu.com","127.0.0.1","localhost"]
 # Application definition
 
 INSTALLED_APPS = [
+    'simpleui',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -38,6 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     "apps.users.apps.UsersConfig",
+    "apps.faces.apps.FacesConfig",
+    "apps.tokens.apps.TokensConfig",
+    "apps.devices.apps.DevicesConfig"
 ]
 
 MIDDLEWARE = [
@@ -130,6 +134,14 @@ ARCFACE_KEY = "gpqGgwU7yKFCCRDCFVVFvm99CrteaKogj6Wynk8xh6R"
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 
+# simpleui
+SIMPLEUI_DEFAULT_THEME = 'admin.lte.css'
+# SIMPLEUI_HOME_PAGE = 'https://www.baidu.com'
+# SIMPLEUI_HOME_TITLE = '酒店视觉AI解决方案-后台管理'
+SIMPLEUI_HOME_INFO = False  # 服务器信息,右侧simple ui主页
+SIMPLEUI_ANALYSIS = False
+
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -159,12 +171,12 @@ USE_L10N = True
 
 USE_TZ = False
 
-
+AUTH_USER_MODEL = "users.Users"
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 # AUTH_USER_MODEL = "users.User"
-
+# STATIC_ROOT = os.path.join(BASE_DIR, "static")
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),

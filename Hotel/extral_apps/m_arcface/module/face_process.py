@@ -22,7 +22,7 @@ from extral_apps.m_arcface.module.image_source import get_regular_file, read_ima
 
 from Hotel import settings
 from extral_apps import MD5
-from apps.users.models import FaceData
+from apps.faces.models import FaceData
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.DEBUG)
@@ -117,9 +117,9 @@ class FaceInfo:
         获取用户性别，自建函数
         """
         if self.gender == Gender.Female:
-            return "女"
+            return "female"
         elif self.gender == Gender.Male:
-            return "男"
+            return "male"
         else:
             return ""
 
@@ -257,9 +257,10 @@ class FaceProcess:
         #         file.write("\n")
         for name, feature in self._features.items():
             facedata = FaceData()
-            facedata.realname = name
+            facedata.name = name
             facedata.sign = base64.b64encode(feature).decode()
-            facedata.pic = settings.COS_ROOTURL + "facedata/" + MD5.md5(name) + ".jpg"
+            # facedata.pic = settings.COS_ROOTURL + "facedata/" + MD5.md5(name) + ".jpg"
+            facedata.pic = "faces_data/" + MD5.md5(name) + ".face"
             facedata.update_time = datetime.now()
             facedata.save()
         return len(self._features)
@@ -284,10 +285,11 @@ class FaceProcess:
         #     file.write("\n")
         feature = self._features[name]
         base_data: str = base64.b64encode(feature).decode()
-        pic = settings.COS_ROOTURL + "facedata/" + MD5.md5(name) + ".jpg"
+        # pic = settings.COS_ROOTURL + "facedata/" + MD5.md5(name) + ".jpg"
+        pic = "faces_data/" + MD5.md5(name) + ".face"
 
         defaults = {"sign": base_data, "pic": pic, "update_time": datetime.now()}
-        FaceData.objects.update_or_create(defaults=defaults, realname=name)
+        FaceData.objects.update_or_create(defaults=defaults, name=name)
         return len(self._features)
 
     def load_features(self) -> int:
@@ -307,7 +309,7 @@ class FaceProcess:
         #         line = file.readline()
         face_list = FaceData.objects.all()
         for face_data in face_list:
-            name = face_data.realname
+            name = face_data.name
             feature = face_data.sign
             self._features[name] = feature
             count += 1

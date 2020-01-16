@@ -59,8 +59,9 @@ COS 模块初始化，此函数应在所有函数之前调用
         log_cos.info("Cos Server is available")
     else:
         settings.COS_SERVER_MODE = 0
-        os.makedirs(os.path.join(Main_filepath, "data", "local", "portrait"), exist_ok=True)
-        os.makedirs(os.path.join(Main_filepath, "data", "local", "article"), exist_ok=True)
+        os.makedirs(os.path.join(Main_filepath, settings.MEDIA_URL))
+        os.makedirs(os.path.join(Main_filepath, settings.MEDIA_URL, "faces_data"), exist_ok=True)
+        os.makedirs(os.path.join(Main_filepath, settings.MEDIA_URL, "tmp"), exist_ok=True)
         print("[COS]Online Server is unavailable , using local storage server")
         log_cos.warning("Cos is unavailable , using local storage mode")
 
@@ -121,7 +122,9 @@ def online_check() -> bool:
     # return False
     # os.makedirs(os.path.join(Main_filepath, "data", "local", "portrait"), exist_ok=True)
     # os.makedirs(os.path.join(Main_filepath, "data", "local", "article"), exist_ok=True)
-    os.makedirs(os.path.join(Main_filepath, "data", "local", "fallpic"), exist_ok=True)
+    os.makedirs(os.path.join(Main_filepath, settings.MEDIA_URL), exist_ok=True)
+    os.makedirs(os.path.join(Main_filepath, settings.MEDIA_URL, "faces_data"), exist_ok=True)
+    os.makedirs(os.path.join(Main_filepath, settings.MEDIA_URL, "tmp"), exist_ok=True)
     response = client.list_buckets()
     # print(response)
     buckets = response["Buckets"]["Bucket"]
@@ -163,7 +166,7 @@ def file_upload(filename: str, key: str, storageclass: str = 'STANDARD',
         try:
             with open(filename, 'rb') as fp:
                 file_data = fp.read()
-            with open(os.path.join(Main_filepath, "data", "local", key), "wb") as fp2:
+            with open(os.path.join(Main_filepath, settings.MEDIA_URL, key), "wb") as fp2:
                 fp2.write(file_data)
             return MD5.md5(file_data, b"")
         except:
@@ -191,7 +194,7 @@ def bytes_upload(body: bytes, key: str) -> str:
             log_cos.warning("{}:{}".format(e, type(e)))
             # 容灾处理，上传失败时先放置在本地。
             try:
-                with open(os.path.join(Main_filepath, settings.MEDIA_URL,key), "wb") as fp:
+                with open(os.path.join(Main_filepath, settings.MEDIA_URL, key), "wb") as fp:
                     fp.write(body)
                 return MD5.md5_bytes(body, b"")
             except:
@@ -284,7 +287,7 @@ def local_dwonload(key: str, outfilename: str) -> bool:
             return False
     else:
         try:
-            with open(os.path.join(Main_filepath, "data", "local", key), "rb") as fp:
+            with open(os.path.join(Main_filepath, settings.MEDIA_URL, key), "rb") as fp:
                 file_data = fp.read()
             with open(outfilename, "wb") as fp2:
                 fp2.write(file_data)
