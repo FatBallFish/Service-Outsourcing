@@ -5,7 +5,6 @@ from Hotel import settings
 
 from apps.faces.models import FaceGroup, FaceData
 from extral_apps import MD5
-from extral_apps.m_cos import py_cos_main as COS
 from extral_apps.m_arcface import main as Arcface
 
 import json, base64
@@ -13,8 +12,8 @@ import os
 
 # Create your views here.
 
-COS.Initialize(settings.BASE_DIR)
-Arcface.Initialize(False)
+# COS.Initialize(settings.BASE_DIR)
+# Arcface.Initialize(False)
 
 
 class FaceRegisterView(View):

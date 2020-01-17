@@ -99,10 +99,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'arcface',
-        'USER': 'root',
-        'PASSWORD': 'wlc570Q0',
-        'HOST': 'localhost',
-        'PORT': 3306,
+        'USER': 'hotel',
+        'PASSWORD': 'hotel2020',
+        'HOST': '5780e03864e11.sh.cdb.myqcloud.com',
+        'PORT': 4201,
     }
 }
 
