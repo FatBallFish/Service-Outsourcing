@@ -15,7 +15,6 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
@@ -25,8 +24,7 @@ SECRET_KEY = 't8orzbrmu_&p0y8wru4_4*v+zpdt4h0h&j9c+9@61p6j^0eujy'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["ecc.zustjinzhu.com","127.0.0.1","localhost"]
-
+ALLOWED_HOSTS = ["hotel.lcworkroom.cn","lcworkroom.cn", "zustjinzhu.com", "127.0.0.1", "localhost"]
 
 # Application definition
 
@@ -75,7 +73,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'Hotel.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
@@ -115,8 +112,8 @@ REDIS_IMG_SETNAME = "img_authentication"
 REDIS_SMS_SETNAME = "sms_authentication"
 
 # SMS
-SMS_APPID = "1400260704"
-SMS_APPKEY = "47f736f34f0fc802fe50ea0db5e156c4"
+SMS_APPID = "1400097031"
+SMS_APPKEY = "417a2a23700289bf50f6cff4fdefa467"
 
 # COS
 COS_SECRET_ID = "AKIDBA5ss1AJZZloVP4la9SWpMC6wXtzqNfi"
@@ -141,7 +138,6 @@ SIMPLEUI_DEFAULT_THEME = 'admin.lte.css'
 SIMPLEUI_HOME_INFO = False  # 服务器信息,右侧simple ui主页
 SIMPLEUI_ANALYSIS = False
 
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -156,7 +152,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
@@ -183,3 +178,4 @@ STATICFILES_DIRS = [
 ]
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")  # 注意:这里配置os的时候,不像配置static的时候要[],这里不需要[]
 MEDIA_URL = "/media/"
+API_ROOT = 'api/'

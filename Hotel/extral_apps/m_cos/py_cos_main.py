@@ -59,9 +59,9 @@ COS 模块初始化，此函数应在所有函数之前调用
         log_cos.info("Cos Server is available")
     else:
         settings.COS_SERVER_MODE = 0
-        os.makedirs(os.path.join(Main_filepath, settings.MEDIA_URL))
-        os.makedirs(os.path.join(Main_filepath, settings.MEDIA_URL, "faces_data"), exist_ok=True)
-        os.makedirs(os.path.join(Main_filepath, settings.MEDIA_URL, "tmp"), exist_ok=True)
+        os.makedirs(os.path.join(settings.MEDIA_ROOT))
+        os.makedirs(os.path.join(settings.MEDIA_ROOT, "faces_data"), exist_ok=True)
+        os.makedirs(os.path.join(settings.MEDIA_ROOT, "tmp"), exist_ok=True)
         print("[COS]Online Server is unavailable , using local storage server")
         log_cos.warning("Cos is unavailable , using local storage mode")
 
@@ -122,9 +122,9 @@ def online_check() -> bool:
     # return False
     # os.makedirs(os.path.join(Main_filepath, "data", "local", "portrait"), exist_ok=True)
     # os.makedirs(os.path.join(Main_filepath, "data", "local", "article"), exist_ok=True)
-    os.makedirs(os.path.join(Main_filepath, settings.MEDIA_URL), exist_ok=True)
-    os.makedirs(os.path.join(Main_filepath, settings.MEDIA_URL, "faces_data"), exist_ok=True)
-    os.makedirs(os.path.join(Main_filepath, settings.MEDIA_URL, "tmp"), exist_ok=True)
+    os.makedirs(os.path.join(settings.MEDIA_ROOT), exist_ok=True)
+    os.makedirs(os.path.join(settings.MEDIA_ROOT, "faces_data"), exist_ok=True)
+    os.makedirs(os.path.join(settings.MEDIA_ROOT, "tmp"), exist_ok=True)
     response = client.list_buckets()
     # print(response)
     buckets = response["Buckets"]["Bucket"]

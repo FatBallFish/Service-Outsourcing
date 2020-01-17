@@ -105,7 +105,7 @@ class UserLoginView(View):
             return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
 
 
-class RegisterView(View):
+class UserRegisterView(View):
     def post(self, request, *args, **kwargs):
         try:
             data = dict(json.loads(request.body))
@@ -216,7 +216,7 @@ class CaptchaView(View):
                 result = Redis.SafeCheck(hash)
                 if result == True:
                     # status 0 校验成功。
-                    return JsonResponse({"id": id, "status": 0, "message": "successful", "data": {}})
+                    return JsonResponse({"id": id, "status": 0, "message": "Successful", "data": {}})
                 elif result == False:
                     # status 100 验证码hash值不匹配(包括验证码过期)。
                     return JsonResponse({"id": id, "status": 100, "message": "Error captcha hash", "data": {}})
@@ -245,10 +245,12 @@ class CaptchaView(View):
                     command_type = data["command_type"]
                 code = random.randint(10000, 99999)
                 if command_type == 1:
+                    # 注册账号
                     result = SmsCaptcha.SendCaptchaCode(phone_number=phone, captcha=code, command_str="注册账号",
                                                         ext=str(id))
                     print(result)
                 elif command_type == 2:
+                    # 找回密码
                     result = SmsCaptcha.SendCaptchaCode(phone_number=phone, captcha=code, command_str="找回密码",
                                                         ext=str(id))
                     print(result)
@@ -292,15 +294,13 @@ class CaptchaView(View):
                 result = Redis.SafeCheck(hash)
                 if result == True:
                     # status 0 校验成功。
-                    return JsonResponse({"id": id, "status": 0, "message": "successful", "data": {}})
+                    return JsonResponse({"id": id, "status": 0, "message": "Successful", "data": {}})
                 elif result == False:
                     # status 100 验证码hash值不匹配(包括验证码过期)。
                     return JsonResponse({"id": id, "status": 100, "message": "Error captcha hash", "data": {}})
                 else:
                     # status -404 Unkown Error
                     return JsonResponse({"id": id, "status": -404, "message": "Unknown Error", "data": {}})
-            elif data["subtype"] == "delete":
-                pass
             else:
                 # status -2 json的value错误。
                 return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
@@ -372,7 +372,7 @@ class UserInfoView(View):
                 # 判断指定所需字段是否存在，若不存在返回status -1 json。
                 for key in data.keys():
                     if key not in ["username", "phone", "name", "nickname", "email", "gender"]:
-                        # status -3 Error data key data数据中必需key缺失
+                        # status -3 Error data key data数据中必需key缺失 / data中有非预料中的key字段
                         return JsonResponse(
                             {"id": id, "status": -3, "message": "Error data key", "data": {}})
                 if "username" in data.keys():
@@ -384,6 +384,7 @@ class UserInfoView(View):
                             if user is None:
                                 return JsonResponse({"id": id, "status": 100, "message": "No Such User", "data": {}})
                         else:
+                            # status 102 没有权限进行操作
                             return JsonResponse(
                                 {"id": id, "status": 102, "message": "No Permission Operation", "data": {}})
                 for key in data.keys():
@@ -406,6 +407,8 @@ class UserInfoView(View):
                             continue
                         else:
                             user.gender = data[key]
+                    elif key == "phone":
+                        continue
                 try:
                     user.save()
                 except Exception as e:

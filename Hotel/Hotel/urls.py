@@ -20,15 +20,23 @@ from django.views.static import serve
 from django.views.decorators.csrf import csrf_exempt
 
 from Hotel import settings
+from apps.tokens.views import TokenDokiView, PingView
 from apps.faces.views import FaceRegisterView
-from apps.users.views import UserLoginView
+from apps.users.views import UserLoginView,UserRegisterView,UserInfoView,CaptchaView
 import os
 
-API_ROOT = "api/"
+API_ROOT = settings.API_ROOT
 urlpatterns = [
     # 全局配置
     url(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
     path('admin/', admin.site.urls),
-    path(API_ROOT + "face/register/", csrf_exempt(FaceRegisterView.as_view()), name="face_register"),
+
+    path(API_ROOT + "ping/", PingView.as_view(), name="ping"),
     path(API_ROOT + "user/login/", csrf_exempt(UserLoginView.as_view()), name="user_login"),
+    path(API_ROOT + "user/register/", csrf_exempt(UserRegisterView.as_view()), name="user_register"),
+    path(API_ROOT + "user/doki/", csrf_exempt(TokenDokiView.as_view()), name="user_doki"),
+    path(API_ROOT + "user/info/", csrf_exempt(UserInfoView.as_view()), name="user_info"),
+    path(API_ROOT + "captcha/", csrf_exempt(CaptchaView.as_view()), name="captcha"),
+    path(API_ROOT + "face/register/", csrf_exempt(FaceRegisterView.as_view()), name="face_register"),
+
 ]
