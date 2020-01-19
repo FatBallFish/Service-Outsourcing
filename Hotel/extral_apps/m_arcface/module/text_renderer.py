@@ -87,7 +87,7 @@ def _get_put_text():
     if platform.system() == "Windows":
         font_path = r"C:\Windows\Fonts\msyh.ttc"
     elif platform.system() == "Linux":
-        font_path = r""
+        font_path = r"/usr/share/fonts/windows/msyh.ttc"
     elif platform.system() == "Mac":
         font_path = r""
 

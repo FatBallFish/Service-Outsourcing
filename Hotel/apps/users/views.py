@@ -1,11 +1,11 @@
 from django.shortcuts import render
 from django.views.generic.base import View
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.contrib.auth import authenticate
 from Hotel import settings
 
 from apps.users.models import Users
-from apps.tokens.models import Tokens,Doki2
+from apps.tokens.models import Tokens, Doki2
 from extral_apps import MD5
 from extral_apps.m_redis import py_redis as Redis
 from extral_apps.m_img import py_captcha_main as ImgCaptcha
@@ -13,11 +13,9 @@ from extral_apps.m_sms import py_sms_main as SmsCaptcha
 from extral_apps.m_cos import py_cos_main as COS
 from extral_apps.m_arcface import main as Arcface
 
-
 from datetime import datetime, timedelta
-import json, base64,random
+import json, base64, random
 import os, time
-
 
 # Create your views here.
 COS.Initialize(settings.BASE_DIR)
@@ -25,6 +23,7 @@ Redis.Initialize(settings.BASE_DIR)
 ImgCaptcha.Initialize(settings.BASE_DIR)
 SmsCaptcha.Initialize(settings.BASE_DIR)
 Arcface.Initialize(False)
+
 
 def createToken(username: str, time_int: float) -> str:
     time_now = int(time_int)
@@ -51,9 +50,11 @@ class UserLoginView(View):
                 json_dict = {"id": id, "status": -1, "message": "Error JSON key", "data": {}}
                 return JsonResponse(json_dict)
         # 处理json
-        if data["type"] == "login":
-            if data["subtype"] == "pass":
-                data = data["data"]
+        type = data["type"]
+        subtype = data["subtype"]
+        data = dict(data["data"])
+        if type == "login":
+            if subtype == "pass":
                 for key in data.keys():
                     if key not in ["username", "pass", "enduring"]:
                         # status -3 json的value错误。
@@ -125,9 +126,11 @@ class UserRegisterView(View):
                 # status -1 json的key错误。
                 return JsonResponse({"id": id, "status": -1, "message": "Error JSON key", "data": {}})
         # 处理json
-        if data["type"] == "register":
-            if data["subtype"] == "phone":
-                data = data["data"]
+        type = data["type"]
+        subtype = data["subtype"]
+        data = dict(data["data"])
+        if type == "register":
+            if subtype == "phone":
                 for key in data.keys():
                     if key not in ["username", "hash", "pass"]:
                         # status -3 json的value错误。
@@ -174,11 +177,12 @@ class CaptchaView(View):
             if not key in data.keys():
                 # status -1 json的key错误。
                 return JsonResponse({"id": id, "status": -1, "message": "Error JSON key", "data": {}})
-
+        type = data["type"]
+        subtype = data["subtype"]
+        data = dict(data["data"])
         # 处理json
-        if data["type"] == "img":
-            if data["subtype"] == "generate":
-                data = data["data"]
+        if type == "img":
+            if subtype == "generate":
                 # code,addr = ImgCaptcha.CreatCode()
                 code, b64_data = ImgCaptcha.CreatCode()
                 code = code.lower()  # 将所有的验证码转成小写
@@ -206,8 +210,7 @@ class CaptchaView(View):
                 #     "data":{"code":code,"addr":addr,"rand":rand_str}
                 return JsonResponse(
                     {"id": id, "status": 0, "message": "Successful", "data": {"imgdata": b64_data, "rand": rand_str}})
-            elif data["subtype"] == "validate":
-                data = data["data"]
+            elif subtype == "validate":
                 for key in data.keys():
                     if key not in ["hash"]:
                         # status -3 json的value错误。
@@ -226,9 +229,8 @@ class CaptchaView(View):
             else:
                 # status -2 json的value错误。
                 return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
-        elif data["type"] == "sms":
+        elif type == "sms":
             if data["subtype"] == "generate":
-                data = data["data"]
                 for key in ["phone"]:
                     # if key not in ["phone","hash"]:
                     if key not in data.keys():
@@ -285,7 +287,6 @@ class CaptchaView(View):
                     # status=result["result"] 遇到错误原样返回腾讯云信息
                     return JsonResponse({"id": id, "status": status, "message": message, "data": {}})
             elif data["subtype"] == "validate":
-                data = data["data"]
                 for key in data.keys():
                     if key not in ["hash"]:
                         # status -3 json的value错误。
@@ -338,7 +339,7 @@ class UserInfoView(View):
             # status -100 缺少必要的参数
             return JsonResponse({"id": -1, "status": -100, "message": "Missing necessary args", "data": {}})
         result, user = Doki2(token=token)
-        if result == False:
+        if result is False:
             return JsonResponse({"id": -1, "status": -101, "message": "Error Token", "data": {}})
         try:
             data = dict(json.loads(request.body))
@@ -415,6 +416,185 @@ class UserInfoView(View):
                     return JsonResponse({"id": id, "status": 101, "message": "Update UserInfo Failed"})
 
                 return JsonResponse({"id": id, "status": 0, "message": "Successful", "data": {}})
+            else:
+                # status -2 json的value错误。
+                return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
+        else:
+            # status -2 json的value错误。
+            return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
+
+
+class PasswordView(View):
+    def post(self, request, *args, **kwargs):
+        try:
+            data = dict(json.loads(request.body))
+            print(data)
+        except:
+            json_dict = {"id": -1, "status": -1, "message": "Error JSON key", "data": {}}
+            return JsonResponse(json_dict)
+        if "id" in data.keys():
+            id = data["id"]
+        else:
+            id = -1
+        # 判断指定所需字段是否存在，若不存在返回status -1 json。
+        for key in ["type", "subtype", "data"]:
+            if key not in data.keys():
+                # status -1 json的key错误。
+                json_dict = {"id": id, "status": -1, "message": "Error JSON key", "data": {}}
+                return JsonResponse(json_dict)
+        # 处理json
+        type = data["type"]
+        subtype = data["subtype"]
+        data = dict(data["data"])
+        if type == "password":
+            if subtype == "forget":
+                for key in ["username", "hash", "pass"]:
+                    if key not in data.keys():
+                        # status -3 data中有非预料中的key字段
+                        return JsonResponse({"id": id, "status": -3, "message": "Error data key", "data": {}})
+                username = data["username"]
+                hash = data["hash"]
+                new_pass = data["pass"]
+                redis_result = Redis.SafeCheck(hash=hash)
+                if not redis_result:
+                    # status -4 hash值错误
+                    return JsonResponse({"id": id, "status": -4, "message": "Error hash", "data": {}})
+                try:
+                    user = Users.objects.get(username=username)
+                except Exception as e:
+                    # status 100 No such user 没有此用户
+                    return JsonResponse({"id": id, "status": 100, "message": "No such user", "data": {}})
+                user.set_password(new_pass)
+                user.save()
+                Tokens.objects.filter(user=user).delete()
+                return JsonResponse({"id": id, "status": 0, "message": "successful", "data": {}})
+            elif subtype == "change":
+                for key in ["username", "old_pass", "new_pass"]:
+                    if key not in data.keys():
+                        # status -3 data中有非预料中的key字段
+                        return JsonResponse({"id": id, "status": -3, "message": "Error data key", "data": {}})
+                username = data["username"]
+                old_pass = data["old_pass"]
+                new_pass = data["new_pass"]
+                user = authenticate(request, username=username, password=old_pass)
+                if user is None:
+                    # 未查询到用户
+                    # status 101 Error password
+                    return JsonResponse({"id": id, "status": 100, "message": "Error username or password", "data": {}})
+                user.set_password(new_pass)
+                user.save()
+                Tokens.objects.filter(user=user).delete()
+                return JsonResponse({"id": id, "status": 0, "message": "successful", "data": {}})
+            else:
+                # status -2 json的value错误。
+                return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
+        else:
+            # status -2 json的value错误。
+            return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
+
+
+class PortraitView(View):
+    def get(self, request, *args, **kwargs):
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]  # 所以这里是真实的ip
+        else:
+            ip = request.META.get('REMOTE_ADDR')  # 这里获得代理ip
+        print("portrait ip - {}".format(ip))
+        # return HttpResponse("{}".format(ip))
+        try:
+            username = request.GET.get("username")
+            print("username:", username)
+            if not username:
+                with open(os.path.join(settings.MEDIA_ROOT, "users", "error.jpg"), "rb") as f:
+                    img_data = f.read()
+                return HttpResponse(img_data, content_type="image/jpg")
+        except Exception as e:
+            print(e)
+            print("Missing necessary args")
+            # log_main.error("Missing necessary agrs")
+            # status -100 缺少必要的参数
+            with open(os.path.join(settings.MEDIA_ROOT, "users", "error.jpg"), "rb") as f:
+                img_data = f.read()
+            return HttpResponse(img_data, content_type="image/jpg")
+        user_list = Users.objects.filter(username=username)
+        if len(user_list) == 1:
+            file_name = MD5.md5(username) + ".user"
+            try:
+                with open(os.path.join(settings.MEDIA_ROOT, "users", file_name), "rb") as f:
+                    img_data = f.read()
+                return HttpResponse(img_data, content_type="image/jpg")
+            except Exception as e:
+                with open(os.path.join(settings.MEDIA_ROOT, "users", "default.jpg"), "rb") as f:
+                    img_data = f.read()
+                return HttpResponse(img_data, content_type="image/jpg")
+
+        with open(os.path.join(settings.MEDIA_ROOT, "users", "error.jpg"), "rb") as f:
+            img_data = f.read()
+        return HttpResponse(img_data, content_type="image/jpg")
+
+    def post(self, request, *args, **kwargs):
+        try:
+            token = request.GET.get("token")
+            print("token:", token)
+        except Exception as e:
+            print(e)
+            print("Missing necessary args")
+            # log_main.error("Missing necessary agrs")
+            # status -100 缺少必要的参数
+            return JsonResponse({"id": -1, "status": -100, "message": "Missing necessary args", "data": {}})
+        result, user = Doki2(token=token)
+        if result is False:
+            return JsonResponse({"id": -1, "status": -101, "message": "Error Token", "data": {}})
+        try:
+            data = dict(json.loads(request.body))
+            print(data)
+        except Exception as e:
+            print(e)
+            # status -1 json的key错误。此处id是因为没有进行读取，所以返回默认的-1。
+            return JsonResponse({"id": -1, "status": -1, "message": "Error JSON key", "data": {}})
+            # 先获取json里id的值，若不存在，默认值为-1
+        if "id" in data.keys():
+            id = data["id"]
+        else:
+            id = -1
+        ## 判断指定所需字段是否存在，若不存在返回status -1 json。
+        for key in ["type", "subtype", "data"]:
+            if key not in data.keys():
+                # status -1 json的key错误。
+                return JsonResponse({"id": id, "status": -1, "message": "Error JSON key", "data": {}})
+        type = data["type"]
+        subtype = data["subtype"]
+        data = dict(data["data"])
+        ## -------正式处理事务-------
+        if type == "portrait":
+            if subtype == "upload":
+                for key in ["base64"]:
+                    if key not in data.keys():
+                        # status -3 data中有非预料中的key字段
+                        return JsonResponse({"id": id, "status": -3, "message": "Error data key", "data": {}})
+                img_base64 = str(data["base64"])
+                base64_head_index = img_base64.find(";base64,")
+                if base64_head_index != -1:
+                    print("进行了替换")
+                    img_base64 = img_base64.partition(";base64,")[2]
+                file_name = MD5.md5(user.username) + ".user"
+                # print("-------接收到数据-------\n", img_base64, "\n-------数据结构尾-------")
+                try:
+                    img_file = base64.b64decode(img_base64)
+                except Exception as e:
+                    return JsonResponse({"id": id, "status": 100, "message": "Error base64 data", "data": {}})
+                # TODO 优化文件存储的效率（使用多线程），包括后期的人脸数据
+                # TODO 后期对图片文件进行加密处理
+                try:
+                    with open(os.path.join(settings.MEDIA_ROOT, "users", file_name), "wb") as f:
+                        f.write(img_file)
+                except Exception as e:
+                    return JsonResponse({"id": id, "status": 101, "message": "Upload portrait failed", "data": {}})
+                user.image = "users/{}".format(file_name)
+                user.save()
+                return JsonResponse({"id": id, "status": 0, "message": "Successful", "data": {
+                    "url": "/api/user/portrait/?username={}".format(user.username)}})
             else:
                 # status -2 json的value错误。
                 return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})

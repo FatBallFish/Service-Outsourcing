@@ -1,7 +1,7 @@
 import logging
 import os, json
 from typing import Dict, Generator
-
+import platform,sys
 import numpy as np
 
 from Hotel import settings
@@ -203,7 +203,23 @@ def Initialize(single: bool = False):
     #     args.app_id = profile["app-id"].encode()
     #     args.sdk_key = profile["sdk-key"].encode()
     ArcFace.APP_ID = settings.ARCFACE_APPID.encode("utf8")
-    ArcFace.SDK_KEY = settings.ARCFACE_KEY.encode("utf8")
+    system = platform.system()
+    bits = "32" if platform.architecture()[0] == "32bit" else "64"
+    _logger.info("System:{} {}bit".format(system,bits))
+    if system == "Windows":
+        if bits == "64":
+            ArcFace.SDK_KEY = settings.ARCFACE_KEY_Win64.encode("utf8")
+        elif bits == "32":
+            ArcFace.SDK_KEY = settings.ARCFACE_KEY_Win32.encode("utf8")
+    elif system == "Linux":
+        if bits == "64":
+            ArcFace.SDK_KEY = settings.ARCFACE_KEY_Linux64.encode("utf8")
+        elif bits == "32":
+            _logger.error("Unsupported System bits")
+            sys.exit()
+    else:
+        _logger.error("Unknown System, can't choose sdk lib")
+        sys.exit()
     # pic_path = "./database"
     # cache_path = './cache/cache.txt'
     global face_process
@@ -222,7 +238,7 @@ def Initialize(single: bool = False):
     #     run(image_source, face_process)
 
     print(settings.ARCFACE_APPID)
-    print(settings.ARCFACE_KEY)
+    # print(settings.ARCFACE_KEY)
 
 
 if __name__ == '__main__':

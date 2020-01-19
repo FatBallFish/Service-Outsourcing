@@ -426,13 +426,13 @@ Null
 
 Please refer to [Global Status Table](#Global Status Table)
 
-| Status | Method     |
-| ------ | ---------- |
-| -101   | GET / POST |
-| -100   | GET / POST |
-| -3     | POST       |
-| -2     | POST       |
-| -1     | POST       |
+| Status |
+| ------ |
+| -101   |
+| -100   |
+| -3     |
+| -2     |
+| -1     |
 
 > **Local Status**
 
@@ -441,6 +441,273 @@ Please refer to [Global Status Table](#Global Status Table)
 |  100   |      No Such User       |   无该账号记录   |
 |  101   | Update UserInfo Failed  | 更新用户信息失败 |
 |  102   | No Permission Operation |    无权限操作    |
+
+## User Password - Forget
+
+> **API Description**
+
+`POST`
+
+​	通过手机短信验证码形式找回用户密码**（仅限于用手机号注册的账号）**
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/user/password/`
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"password",
+    "subtype":"forget",
+    "data":{
+        "username":"13750687010",
+        "hash":"h2xf24rf..",
+        "pass":"wanglingchao"
+    }
+}
+```
+
+> **Data Param**
+
+|  Field   |  Type  | Length | Null | Default | **Description** |
+| :------: | :----: | :----: | :--: | :-----: | :-------------: |
+| username | string |   11   |      |         | 账号(即手机号)  |
+|   hash   | string |   32   |      |         |    教研文本     |
+|   pass   | string |        |      |         |     新密码      |
+
+> **Notice**
+
++ `hash`生成规则： `hash = MD5(code,rand)`。`code`为短信验证码内容，`rand`为发送短信验证码请求时附带的随机字符串。**发送短信时需将短信接口中`command_type`设置为`2`**
++ `pass`为用户要设置的新密码，可与原密码相同且不会提示
++ 改密成功后该账户往期的所有`token`记录将被清空，即强制退出用户在所有设备的登录状态，包括长效登录
+
+> **Response Success Example**
+
+```python
+{
+    "id": 1234, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {}
+}
+```
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": 100, 
+    "message": "No Such User", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -4     |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+| Status |   Message    | Description  |
+| :----: | :----------: | :----------: |
+|  100   | No Such User | 无该账号记录 |
+
+## User Password - Change
+
+> **API Description**
+
+`POST`
+
+​	通过验证用户名和原密码进行用户新密码修改
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/user/password/`
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"password",
+    "subtype":"change",
+    "data":{
+        "username":"13750687010",
+        "old_pass":"wanglingchao",
+        "new_pass":"wanglingchao123"
+    }
+}
+```
+
+> **Data Param**
+
+|  Field   |  Type  | Length | Null | Default | **Description** |
+| :------: | :----: | :----: | :--: | :-----: | :-------------: |
+| username | string |   11   |      |         | 账号(即手机号)  |
+| old_pass | string |        |      |         |     原密码      |
+| new_pass | string |        |      |         |     新密码      |
+
+> **Notice**
+
++ `old_pass`为用户要设置的原密码，输入错误返回`status 100`状态码且改密失败
++ `new_pass`为用户要设置的新密码，可与原密码相同且不会提示
++ 改密成功后该账户往期的所有`token`记录将被清空，即强制退出用户在所有设备的登录状态，包括长效登录
+
+> **Response Success Example**
+
+```python
+{
+    "id": 1234, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {}
+}
+```
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": 100, 
+    "message": "No Such User", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+| Status |          Message           |   Description    |
+| :----: | :------------------------: | :--------------: |
+|  100   | Error username or password | 错误的账号或密码 |
+
+## User Portrait - Get
+
+> **API Description**
+
+`GET`
+
+​	通过传递`username`参数获取指定用户头像，返回头像二进制数据
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/user/portrait/?username=`
+
+> **URL Param**
+
+|  Field   |  Type  | Length | Null | Default | **Description** |
+| :------: | :----: | :----: | :--: | :-----: | :-------------: |
+| username | string |   11   |      |         |      账号       |
+
+> **Notice**
+
++ `username`字段不存在或者字段值错误将返回参数错误提示图片`error.jpg`
++ 访问此API的ip若非允许内的ip将被阻截（后期想改成返回禁止访问图片`ban.jpg`）
++ 若用户未上传过头像时将返回默认头像数据
+
+## User Portrait - Upload
+
+> **API Description**
+
+`POST`
+
+​	通过传递的`token`参数以及图片base64数据对指定用户进行图片更新
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/user/portrait/?token=`
+
+> **URL Param**
+
+| Field |  Type  | Length | Null | Default | **Description** |
+| :---: | :----: | :----: | :--: | :-----: | :-------------: |
+| token | string |   32   |      |         |    用户凭证     |
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"portrait",
+    "subtype":"upload",
+    "data":{
+        "base64":"...",
+    }
+}
+```
+
+> **Data Param**
+
+| Field  |  Type  | Length | Null | Default | **Description** |
+| :----: | :----: | :----: | :--: | :-----: | :-------------: |
+| base64 | string |        |      |         | 图片base64数据  |
+
+> **Notice**
+
++ API自动根据`token`值更新对应用户的头像
++ `base64`数据是否去除头信息都无所谓。（头信息例子：`image/jpg;base64,`)
++ 用户多次上传头像则之前的头像数据将被覆写，只保留最后一次上传的数据
+
+> **Response Success Example**
+
+```python
+{
+    "id": 1234, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {
+        "url": "/api/user/portrait/?username=19857160634"
+    }
+}
+```
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": 100, 
+    "message": "No Such User", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+| Status |        Message         |            Description             |
+| :----: | :--------------------: | :--------------------------------: |
+|  100   |   Error base64 data    |          错误的base64数据          |
+|  101   | Upload portrait failed | 上传头像失败（服务器文件存储失败） |
 
 # Captcha
 

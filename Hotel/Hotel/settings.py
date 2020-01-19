@@ -24,7 +24,7 @@ SECRET_KEY = 't8orzbrmu_&p0y8wru4_4*v+zpdt4h0h&j9c+9@61p6j^0eujy'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["hotel.lcworkroom.cn","lcworkroom.cn", "zustjinzhu.com", "127.0.0.1", "localhost"]
+ALLOWED_HOSTS = ["hotel.lcworkroom.cn", "lcworkroom.cn", "zustjinzhu.com", "127.0.0.1", "localhost"]
 
 # Application definition
 
@@ -127,7 +127,15 @@ COS_CACHE_TIME = 3
 
 # Arcface
 ARCFACE_APPID = "6Tg7oTsTDnqP7N56RAvSzkQg3Xj3rjHvuwiuf3mKB2eJ"
-ARCFACE_KEY = "gpqGgwU7yKFCCRDCFVVFvm99CrteaKogj6Wynk8xh6R"
+ARCFACE_KEY_Win32 = "gpqGgwU7yKFCCRDCFVVFvm95xdfZndCTA6qDJJhoa1q"
+ARCFACE_KEY_Win64 = "gpqGgwU7yKFCCRDCFVVFvm99CrteaKogj6Wynk8xh6R"
+ARCFACE_KEY_Linux64 = "gpqGgwU7yKFCCRDCFVVFvm916HnJtCA4y8LDjU5rNTk"
+
+# 讯飞
+ITA_APPID = "5d3f1d27"
+ITA_APIKEY = "eedaa8de4a740862728a90fe3e79aaea"
+ITA_SECRET = "d045bf793b3d4d3adab55f27f876e0a9"
+
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 
