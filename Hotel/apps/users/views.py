@@ -70,11 +70,25 @@ class UserLoginView(View):
                 else:
                     # enduring字段未传入，默认为假
                     enduring = 0
+                try:
+                    Users.objects.get(username=username)
+                except Exception as e:
+                    # status 100 用户不存在
+                    json_dict = {"id": id, "status": 100, "message": "No such user", "data": {}}
+                    return JsonResponse(json_dict)
+                # 判断用户是否是以短信验证码形式注册
+                user_check = authenticate(request, username=username, password=username)
+                if user_check is not None:
+                    # status 101 用户密码未设置
+                    json_dict = {"id": id, "status": 101, "message": "Password not set", "data": {}}
+                    return JsonResponse(json_dict)
+                # 检验账号密码正确性
                 user = authenticate(request, username=username, password=password)
                 if user is None:
-                    # 未查询到用户
-                    json_dict = {"id": id, "status": 100, "message": "Error username or password", "data": {}}
+                    # status 102 用户密码错误
+                    json_dict = {"id": id, "status": 102, "message": "Error password", "data": {}}
                     return JsonResponse(json_dict)
+
                 # 删除过期及多余的token
                 Tokens.objects.filter(expire_time__lt=datetime.now()).delete()
                 token_list = Tokens.objects.filter(user=user).order_by("-add_time")[10:]
@@ -98,6 +112,63 @@ class UserLoginView(View):
                     return JsonResponse({"id": id, "status": 300, "message": "Add Token Failed", "data": {}})
                 # status 0 登录成功，获取用户信息
                 return JsonResponse({"id": id, "status": 0, "message": "Successful", "data": {"token": token}})
+            elif subtype == "sms":
+                for key in data.keys():
+                    if key not in ["username", "hash", "enduring"]:
+                        # status -3 json的value错误。
+                        return JsonResponse({"id": id, "status": -3, "message": "Error data key", "data": {}})
+                username = data["username"]
+                hash = data["hash"]
+                if "enduring" in data.keys():
+                    enduring = data["enduring"]
+                    if not isinstance(enduring, int):
+                        enduring = 0
+                    if enduring != 0:
+                        enduring = 1
+                else:
+                    # enduring字段未传入，默认为假
+                    enduring = 0
+                hash_result = Redis.SafeCheck(hash=hash)
+                if not hash_result:
+                    # status -4 hash不存在
+                    return JsonResponse({"id": id, "status": -4, "message": "Error hash", "data": {}})
+
+                try:
+                    user = Users.objects.get(username=username)
+                    login_type = "login"
+                except Exception as e:
+                    # 用户不存在，即将创建
+                    try:
+                        user = Users.objects.create_user(username=username, email="", password=username, phone=username)
+                        login_type = "create"
+                    except Exception as e:
+                        # status 100 用户不存在
+                        return JsonResponse({"id": id, "status": 100, "message": "Create User Failed", "data": {}})
+                login_user_nopass(request=request, user=user)
+                # 删除过期及多余的token
+                Tokens.objects.filter(expire_time__lt=datetime.now()).delete()
+                token_list = Tokens.objects.filter(user=user).order_by("-add_time")[10:]
+                for r_token in token_list:
+                    Tokens.objects.filter(token=r_token.token).delete()
+                # 创建token并返回
+                time_now = time.time()
+                token = createToken(username, time_now)
+                # 创建Tokens实例类
+                Token = Tokens()
+                Token.user = user
+                Token.token = token
+                Token.expire_time = datetime.now() + timedelta(minutes=10)
+                if enduring == 1:
+                    Token.enduring = True
+                try:
+                    Token.save()
+                except Exception as e:
+                    print(e)
+                    # status 300 token添加失败
+                    return JsonResponse({"id": id, "status": 300, "message": "Add Token Failed", "data": {}})
+                # status 0 登录成功，获取用户信息
+                return JsonResponse({"id": id, "status": 0, "message": "Successful",
+                                     "data": {"token": token, "login_type": login_type}})
             else:
                 # status -2 json的value错误。
                 return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
@@ -230,7 +301,7 @@ class CaptchaView(View):
                 # status -2 json的value错误。
                 return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
         elif type == "sms":
-            if data["subtype"] == "generate":
+            if subtype == "generate":
                 for key in ["phone"]:
                     # if key not in ["phone","hash"]:
                     if key not in data.keys():
@@ -254,6 +325,11 @@ class CaptchaView(View):
                 elif command_type == 2:
                     # 找回密码
                     result = SmsCaptcha.SendCaptchaCode(phone_number=phone, captcha=code, command_str="找回密码",
+                                                        ext=str(id))
+                    print(result)
+                elif command_type == 3:
+                    # 找回密码
+                    result = SmsCaptcha.SendCaptchaCode(phone_number=phone, captcha=code, command_str="账号登录",
                                                         ext=str(id))
                     print(result)
                 else:
@@ -286,7 +362,7 @@ class CaptchaView(View):
                 else:
                     # status=result["result"] 遇到错误原样返回腾讯云信息
                     return JsonResponse({"id": id, "status": status, "message": message, "data": {}})
-            elif data["subtype"] == "validate":
+            elif subtype == "validate":
                 for key in data.keys():
                     if key not in ["hash"]:
                         # status -3 json的value错误。
@@ -324,8 +400,10 @@ class UserInfoView(View):
         result, user = Doki2(token=token)
         if result == False:
             return JsonResponse({"id": -1, "status": -101, "message": "Error Token", "data": {}})
-        data_dict = {"username": user.username, "name": user.last_name + user.first_name, "nickname": user.nickname,
-                     "email": user.email, "phone": user.phone, "gender": user.gender}
+
+        data_dict = {"id": user.id, "username": user.username, "name": user.last_name + user.first_name,
+                     "nickname": user.nickname,
+                     "age": user.age, "email": user.email, "phone": user.phone, "gender": user.gender}
         return JsonResponse({"id": -1, "status": 0, "message": "Successful", "data": data_dict})
 
     def post(self, request, *args, **kwargs):
@@ -365,14 +443,20 @@ class UserInfoView(View):
         if type == "info":  ## 用户信息api
             if subtype == "get":
                 if "username" in data.keys():
-                    user = Users.objects.filter(username=data["username"])[0]
-                data_dict = {"username": user.username, "name": user.last_name + user.first_name,
-                             "nickname": user.nickname, "email": user.email, "phone": user.phone, "gender": user.gender}
+                    username = data['username']
+                    try:
+                        user = Users.objects.get(username=username)
+                    except Exception as e:
+                        return JsonResponse({"id": id, "status": 100, "message": "No Such User", "data": {}})
+                # 若username字段不存在，则自动使用Doki函数获取的user值
+                data_dict = {"id": user.id, "username": user.username, "name": user.last_name + user.first_name,
+                             "nickname": user.nickname, "age": user.age, "email": user.email, "phone": user.phone,
+                             "gender": user.gender}
                 return JsonResponse({"id": id, "status": 0, "message": "Successful", "data": data_dict})
             elif subtype == "update":  ## 用户信息更新api
                 # 判断指定所需字段是否存在，若不存在返回status -1 json。
                 for key in data.keys():
-                    if key not in ["username", "phone", "name", "nickname", "email", "gender"]:
+                    if key not in ["username", "phone", "name", "nickname", "email", "gender", "age"]:
                         # status -3 Error data key data数据中必需key缺失 / data中有非预料中的key字段
                         return JsonResponse(
                             {"id": id, "status": -3, "message": "Error data key", "data": {}})
@@ -381,8 +465,9 @@ class UserInfoView(View):
                     if user.username != username:
                         if user.is_superuser:
                             print("is superuser,update other user info")
-                            user = Users.objects.filter(username=username)[0]
-                            if user is None:
+                            try:
+                                user = Users.objects.get(username=username)
+                            except Exception as e:
                                 return JsonResponse({"id": id, "status": 100, "message": "No Such User", "data": {}})
                         else:
                             # status 102 没有权限进行操作
@@ -410,6 +495,8 @@ class UserInfoView(View):
                             user.gender = data[key]
                     elif key == "phone":
                         continue
+                    elif key == "age":
+                        user.age = int(data[key])
                 try:
                     user.save()
                 except Exception as e:
@@ -455,15 +542,23 @@ class PasswordView(View):
                 username = data["username"]
                 hash = data["hash"]
                 new_pass = data["pass"]
-                redis_result = Redis.SafeCheck(hash=hash)
-                if not redis_result:
-                    # status -4 hash值错误
-                    return JsonResponse({"id": id, "status": -4, "message": "Error hash", "data": {}})
+                # 判断用户是否存在
                 try:
                     user = Users.objects.get(username=username)
                 except Exception as e:
                     # status 100 No such user 没有此用户
                     return JsonResponse({"id": id, "status": 100, "message": "No such user", "data": {}})
+                # 判断用户是否是以短信验证码形式注册
+                user_check = authenticate(request, username=username, password=username)
+                if user_check is not None:
+                    # status 101 用户密码未设置
+                    json_dict = {"id": id, "status": 101, "message": "Password not set", "data": {}}
+                    return JsonResponse(json_dict)
+                redis_result = Redis.SafeCheck(hash=hash)
+                if not redis_result:
+                    # status -4 hash值错误
+                    return JsonResponse({"id": id, "status": -4, "message": "Error hash", "data": {}})
+
                 user.set_password(new_pass)
                 user.save()
                 Tokens.objects.filter(user=user).delete()
@@ -476,11 +571,27 @@ class PasswordView(View):
                 username = data["username"]
                 old_pass = data["old_pass"]
                 new_pass = data["new_pass"]
+                # 判断用户是否存在
+                try:
+                    Users.objects.get(username=username)
+                except Exception as e:
+                    # status 100 No such user 没有此用户
+                    return JsonResponse({"id": id, "status": 100, "message": "No such user", "data": {}})
+                # 判断用户是否是以短信验证码形式注册
+                user_check = authenticate(request, username=username, password=username)
+                if user_check is not None:
+                    # status 101 用户密码未设置
+                    json_dict = {"id": id, "status": 101, "message": "Password not set", "data": {}}
+                    return JsonResponse(json_dict)
+                # 验证账号密码正确性
                 user = authenticate(request, username=username, password=old_pass)
                 if user is None:
-                    # 未查询到用户
-                    # status 101 Error password
-                    return JsonResponse({"id": id, "status": 100, "message": "Error username or password", "data": {}})
+                    # status 102 Error password
+                    return JsonResponse({"id": id, "status": 102, "message": "Error password", "data": {}})
+                if new_pass == username:
+                    # status 103 用户密码不能与账号一致
+                    json_dict = {"id": id, "status": 103, "message": "Password cannot be the same as account",
+                                 "data": {}}
                 user.set_password(new_pass)
                 user.save()
                 Tokens.objects.filter(user=user).delete()
@@ -517,8 +628,8 @@ class PortraitView(View):
             with open(os.path.join(settings.MEDIA_ROOT, "users", "error.jpg"), "rb") as f:
                 img_data = f.read()
             return HttpResponse(img_data, content_type="image/jpg")
-        user_list = Users.objects.filter(username=username)
-        if len(user_list) == 1:
+        try:
+            Users.objects.get(username=username)
             file_name = MD5.md5(username) + ".user"
             try:
                 with open(os.path.join(settings.MEDIA_ROOT, "users", file_name), "rb") as f:
@@ -528,11 +639,10 @@ class PortraitView(View):
                 with open(os.path.join(settings.MEDIA_ROOT, "users", "default.jpg"), "rb") as f:
                     img_data = f.read()
                 return HttpResponse(img_data, content_type="image/jpg")
-
-        with open(os.path.join(settings.MEDIA_ROOT, "users", "error.jpg"), "rb") as f:
-            img_data = f.read()
-        return HttpResponse(img_data, content_type="image/jpg")
-
+        except Exception as e:
+            with open(os.path.join(settings.MEDIA_ROOT, "users", "error.jpg"), "rb") as f:
+                img_data = f.read()
+            return HttpResponse(img_data, content_type="image/jpg")
     def post(self, request, *args, **kwargs):
         try:
             token = request.GET.get("token")
@@ -601,3 +711,9 @@ class PortraitView(View):
         else:
             # status -2 json的value错误。
             return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
+
+
+def login_user_nopass(request, user):
+    user.backend = 'django.contrib.auth.backends.ModelBackend'
+    from django.contrib.auth import login
+    return login(request, user)

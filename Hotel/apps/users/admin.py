@@ -9,7 +9,8 @@ class UsersAdmin(admin.ModelAdmin):
     fieldsets = (
         ("基本信息",
          {'fields': (
-             'id', 'username', 'first_name', 'last_name', 'nickname', 'email', 'phone', 'gender', 'read_img_big')}),
+             'id', 'username', 'first_name', 'last_name', 'age', 'nickname', 'email', 'phone', 'gender',
+             'read_img_big')}),
         ("权限信息", {'fields': ('is_superuser', 'is_staff', 'is_active')}),
         ("隐私&安全信息", {'fields': ('password', 'last_login', 'date_joined')})
     )
@@ -17,10 +18,10 @@ class UsersAdmin(admin.ModelAdmin):
     # 参数：垂直布局：admin.VERTICAL  水平布局：admin.HORIZONTAL
     readonly_fields = ('id', 'username', 'password', 'last_login', 'date_joined', 'read_img_big')  # 自定义的数据类型只能设置为只读状态
     # 列表页显示内容
-    list_display = ('read_img_small', 'username', 'first_name', 'last_name', "nickname", "email", "phone")
+    list_display = ('read_img_small', 'username', 'first_name', 'last_name', "age", "nickname", "email", "phone")
     list_display_links = list_display  # 列表中可点击跳转的字段
 
-    search_fields = ('username', 'first_name', 'last_name', "nickname", "email", "phone")  # 列表搜索字段
+    search_fields = ('username', 'first_name', 'last_name', "age", "nickname", "email", "phone")  # 列表搜索字段
     list_filter = search_fields  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
 

@@ -39,7 +39,11 @@ INSTALLED_APPS = [
     "apps.users.apps.UsersConfig",
     "apps.faces.apps.FacesConfig",
     "apps.tokens.apps.TokensConfig",
-    "apps.devices.apps.DevicesConfig"
+    "apps.devices.apps.DevicesConfig",
+    "apps.rooms.apps.RoomsConfig",
+    "apps.guests.apps.GuestsConfig",
+    "apps.customerserver.apps.CustomerserverConfig",
+
 ]
 
 MIDDLEWARE = [

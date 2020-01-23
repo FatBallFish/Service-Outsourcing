@@ -3,6 +3,7 @@ from django.views.generic.base import View
 from django.http import JsonResponse
 from Hotel import settings
 
+from apps.tokens.models import Doki2
 from apps.faces.models import FaceGroup, FaceData
 from extral_apps import MD5
 from extral_apps.m_arcface import main as Arcface
@@ -16,8 +17,20 @@ import os
 # Arcface.Initialize(False)
 
 
-class FaceRegisterView(View):
+class FaceView(View):
     def post(self, request, *args, **kwargs):
+        try:
+            token = request.GET.get("token")
+            print("token:", token)
+        except Exception as e:
+            print(e)
+            print("Missing necessary args")
+            # log_main.error("Missing necessary agrs")
+            # status -100 缺少必要的参数
+            return JsonResponse({"id": -1, "status": -100, "message": "Missing necessary args", "data": {}})
+        result, user = Doki2(token=token)
+        if result is False:
+            return JsonResponse({"id": -1, "status": -101, "message": "Error Token", "data": {}})
         try:
             data = dict(json.loads(request.body))
             print(data)
@@ -37,8 +50,8 @@ class FaceRegisterView(View):
         type = data["type"]
         subtype = data["subtype"]
         data = data["data"]
-        if type == "register":
-            if subtype == "facedata":
+        if type == "face":
+            if subtype == "register":
                 for key in ["name", "base64", "faces_group_id"]:
                     if key not in data.keys():
                         # status -3 json的value错误。

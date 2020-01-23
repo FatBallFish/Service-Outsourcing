@@ -17,6 +17,7 @@ class BaseModel(models.Model):
 
 class Users(AbstractUser):
     nickname = models.CharField(verbose_name="昵称", max_length=20, null=True)
+    age = models.IntegerField(verbose_name="年龄", null=True)
     phone = models.CharField(verbose_name="手机号", max_length=11, unique=True)
     gender = models.CharField(verbose_name="性别", choices=(("male", "先生"), ("female", "女士")), max_length=6, null=True)
     image = models.ImageField(verbose_name="用户头像", upload_to='users', default="users/default.jpg")

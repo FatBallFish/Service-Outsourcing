@@ -21,8 +21,8 @@ from django.views.decorators.csrf import csrf_exempt
 
 from Hotel import settings
 from apps.tokens.views import TokenDokiView, PingView
-from apps.faces.views import FaceRegisterView
-from apps.users.views import UserLoginView,UserRegisterView,UserInfoView,CaptchaView,PasswordView,PortraitView
+from apps.faces.views import FaceView
+from apps.users.views import UserLoginView, UserRegisterView, UserInfoView, CaptchaView, PasswordView, PortraitView
 import os
 
 API_ROOT = settings.API_ROOT
@@ -38,6 +38,6 @@ urlpatterns = [
     path(API_ROOT + "user/password/", csrf_exempt(PasswordView.as_view()), name="user_password"),
     path(API_ROOT + "user/portrait/", csrf_exempt(PortraitView.as_view()), name="user_portrait"),
     path(API_ROOT + "captcha/", csrf_exempt(CaptchaView.as_view()), name="captcha"),
-    path(API_ROOT + "face/register/", csrf_exempt(FaceRegisterView.as_view()), name="face_register"),
+    path(API_ROOT + "face/", csrf_exempt(FaceView.as_view()), name="face_register"),
 
 ]

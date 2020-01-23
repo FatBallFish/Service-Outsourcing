@@ -117,7 +117,7 @@ pong
 
 > **Notice**
 
-+ `hash`生成规则： `hash = MD5(code,rand)`。`code`为短信验证码内容，`rand`为发送短信验证码请求时附带的随机字符串
++ `hash`生成规则： `hash = MD5(code+rand)`。`code`为短信验证码内容，`rand`为发送短信验证码请求时附带的随机字符串
 
 + `pass`为用户设置的明文密码，长度由前端决定限制，后端只取其加密结果
 
@@ -161,13 +161,19 @@ Please refer to [Global Status Table](#Global Status Table)
 | :----: | :----------------: | :----------: |
 |  100   | Create User Failed | 创建账号失败 |
 
-## User Login
+## User Login - Password（**有修改**）
 
 > **API Description**
 
 `POST`
 
 ​	此API用于以手机号作为登录凭证时的登录请求，成功返回token值
+
+​	**修改：**
+
+**1. 局部状态码全部有变，请仔细对照修改**
+
+**2. 新增一条`Notice`中解释**
 
 > **URL**
 
@@ -198,8 +204,8 @@ Please refer to [Global Status Table](#Global Status Table)
 
 > **Notice**
 
++ `pass`为明文密码**（新增）**
 + `enduring`为`0`时，当用户无操作(未使用token向服务器发送任何请求)10min时自动取消其登录状态；为`1`时则保持token不失效(目前设置为永久有效)
-
 + 若想保持token有效，可使用`Doki`刷新token有效时间
 + 获取的`token`用于后期所有需要用户验证的请求操作。  
 + 账号每登录一次即可获得一个`token`
@@ -244,12 +250,109 @@ Please refer to [Global Status Table](#Global Status Table)
 
 > **Local Status**
 
-| Status |          Message           |  Description  |
-| :----: | :------------------------: | :-----------: |
-|  100   | Error username or password | 无该账号记录  |
-|  300   |      Add token failed      | 创建token失败 |
+| Status |     Message      |  Description   |
+| :----: | :--------------: | :------------: |
+|  100   |   No such user   |  无该账号记录  |
+|  101   | Password not set | 用户密码未设置 |
+|  102   |  Error password  |  用户密码错误  |
+|  300   | Add token failed | 创建token失败  |
 
-## User Info - Get
+## User Login - Sms（**新增**）
+
+> **API Description**
+
+`POST`
+
+​	此API用于以手机号作为登录凭证时的登录请求，成功返回token值以及登录状态`login_type`
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/user/login/`
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"login",
+    "subtype":"sms",
+    "data":{
+        "username":"13750687010",
+        "hash":"23jjf455...",
+        "enduring":0,
+    }
+}
+```
+
+> **Data Param**
+
+|  Field   |  Type  | Length | Null | Default |              **Description**              |
+| :------: | :----: | :----: | :--: | :-----: | :---------------------------------------: |
+| username | string |   11   |      |         |                 账号名称                  |
+|   hash   | String |        |      |         |                 校验文本                  |
+| enduring |  int   |   1    |      |    √    | 是否长效登录，`0`为否，`1`为是。默认为`0` |
+
+> **Notice**
+
++ `hash`生成规则： `hash = MD5(code+rand)`。`code`为短信验证码内容，`rand`为发送短信验证码请求时附带的随机字符串
++ `enduring`为`0`时，当用户无操作(未使用token向服务器发送任何请求)10min时自动取消其登录状态；为`1`时则保持token不失效(目前设置为永久有效)
++ 若想保持token有效，可使用`Doki`刷新token有效时间
++ 获取的`token`用于后期所有需要用户验证的请求操作。  
++ 账号每登录一次即可获得一个`token`
++ 一个账号同时获得10个以上的`token`时，自动删除早期的`token`，维持`token`数在10以内
++ 获得的`token`未被用于任何操作超过`10min`后将被自动删除（设置为长效token的除外）
++ 若`enduring`传递了非`int`类型数据，则自动为`0`
+
+> **Response Success Example**
+
+```python
+{
+    "id": 1234, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {
+        "token": "debc454ea24827b67178482fd73f37c3",
+        "login_type":"create"
+    }
+}
+```
+
+> **Notice**
+
++ `login_type`取值有：`create`、`login`
+  + `create`：用户原先不存在，自动创建
+  + `login`：用户已存在，自动登录
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": 100, 
+    "message": "Create User Failed", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -200   |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+| Status |      Message       |  Description  |
+| :----: | :----------------: | :-----------: |
+|  100   | Create User Failed | 创建用户失败  |
+|  300   |  Add token failed  | 创建token失败 |
+
+## User Info - Get（有修改）
 
 > **API Description**
 
@@ -259,7 +362,13 @@ Please refer to [Global Status Table](#Global Status Table)
 
 `POST`
 
-​	通过`token`或`username`值获取对应或指定的用户信息
+​	通过`token`（url参数）或`username`值（POST字段）获取对应或指定的用户信息
+
+**修改：**
+
+**1.新增`100`局部状态码，用来处理用户不存在的情况**
+
+**2.新增2条`Notice`解释**
 
 > **URL**
 
@@ -292,13 +401,9 @@ Please refer to [Global Status Table](#Global Status Table)
 
 > **Notice**
 
++ `token`为必传字段，不论是否以`token`获取用户信息**（新增）**
++ 若`token`与`username`同时存在，则查询`username`对应用户信息**（新增）**
 + `username`缺省则自动获取`token`对应的用户信息，不缺省可查指定用户的信息
-
-+ 若想保持token有效，可使用`Doki`刷新token有效时间
-+ 获取的`token`用于后期所有需要用户验证的请求操作。  
-+ 账号每登录一次即可获得一个`token`
-+ 一个账号同时获得10个以上的`token`时，自动删除早期的`token`，维持`token`数在10以内
-+ 获得的`token`未被用于任何操作超过`10min`后将被自动删除（设置为长效token的除外）
 + `POST`模式可查其他用户信息，`GET`模式只能查询自己的信息
 
 > **Response Success Example**
@@ -339,9 +444,9 @@ Please refer to [Global Status Table](#Global Status Table)
 
 > **Local Status**
 
-Null
-
-
+| Status |   Message    | Description  |
+| :----: | :----------: | :----------: |
+|  100   | No Such User | 无该账号记录 |
 
 ## User Info - Update
 
@@ -442,13 +547,17 @@ Please refer to [Global Status Table](#Global Status Table)
 |  101   | Update UserInfo Failed  | 更新用户信息失败 |
 |  102   | No Permission Operation |    无权限操作    |
 
-## User Password - Forget
+## User Password - Forget（有修改）
 
 > **API Description**
 
 `POST`
 
 ​	通过手机短信验证码形式找回用户密码**（仅限于用手机号注册的账号）**
+
+**修改：**
+
+**1.新增`101`局部状态码，拦截使用短信验证码注册且未设置过密码的账号进行忘记密码操作**
 
 > **URL**
 
@@ -522,13 +631,17 @@ Please refer to [Global Status Table](#Global Status Table)
 | :----: | :----------: | :----------: |
 |  100   | No Such User | 无该账号记录 |
 
-## User Password - Change
+## User Password - Change（有修改）
 
 > **API Description**
 
 `POST`
 
 ​	通过验证用户名和原密码进行用户新密码修改
+
+**修改：**
+
+**局部状态码全部有变，请仔细对照修改**
 
 > **URL**
 
@@ -597,9 +710,12 @@ Please refer to [Global Status Table](#Global Status Table)
 
 > **Local Status**
 
-| Status |          Message           |   Description    |
-| :----: | :------------------------: | :--------------: |
-|  100   | Error username or password | 错误的账号或密码 |
+| Status |                Message                 |    Description     |
+| :----: | :------------------------------------: | :----------------: |
+|  100   |              No such user              |     没有此用户     |
+|  101   |            Password not set            |   用户密码未设置   |
+|  102   |             Error password             |     错误的密码     |
+|  103   | Password cannot be the same as account | 密码不能与账号一致 |
 
 ## User Portrait - Get
 
@@ -608,6 +724,10 @@ Please refer to [Global Status Table](#Global Status Table)
 `GET`
 
 ​	通过传递`username`参数获取指定用户头像，返回头像二进制数据
+
+**修改：**
+
+****
 
 > **URL**
 
@@ -859,7 +979,7 @@ Please refer to [Global Status Table](#Global Status Table)
 | :----: | :----------------: | :--------------: |
 |  100   | Error captcha hash | 错误的验证码hash |
 
-## Sms Captcha - Generate
+## Sms Captcha - Generate（**有修改**）
 
 > **API Description**
 
@@ -868,6 +988,10 @@ Please refer to [Global Status Table](#Global Status Table)
 此API用于以手机号作为账号进行`注册`或`找回密码`时发送短信验证码
 
 成功则向指定手机发送短信，并返回一个5位`rand`值
+
+**修改：**
+
+**新增一种`Data Param`中`command_type`的情况，用来处理用户短信登录**
 
 > **URL**
 
@@ -892,11 +1016,12 @@ Please refer to [Global Status Table](#Global Status Table)
 |    Field     |  Type  | Length | Null | Default |                       **Description**                        |
 | :----------: | :----: | :----: | :--: | :-----: | :----------------------------------------------------------: |
 |    phone     | string |   11   |      |         |                            手机号                            |
-| command_type |  int   |  1-2   |      |    √    |            短信类型。`1`为注册账号;`2`为找回密码             |
+| command_type |  int   |  1-2   |      |    √    | 短信类型。`1`为注册账号;`2`为找回密码；`3`为账号短信登录（**新增**） |
 |     hash     | string |   32   |      |    √    | 图片验证码hash，**该字段目前不使用**<br />`hash = MD5(imgcode + rand` |
 
 > **Notice**
 
+- **`command_type`新增状态`3`用于处理短信登录的验证码发送**
 - `phone`字段需用文本型传递，且只能为中国大陆手机号，不支持国外手机号
 - `hash`字段的数据要求是用户填写的验证码内容与`rand`文本进行MD5加密获得。即`hash = MD5(code + rand)`
 
