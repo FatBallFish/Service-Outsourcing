@@ -4,7 +4,7 @@ from django.utils.html import format_html
 from apps.users.models import BaseModel, Users
 
 # Create your models here.
-
+from typing import Tuple
 from datetime import datetime, timedelta
 
 
@@ -61,15 +61,15 @@ class Tokens(BaseModel):
 
 
 # 附带功能
-def Doki2(token: str) -> tuple:
+def Doki2(token: str) -> Tuple[bool, Users]:
     Token_list = Tokens.objects.filter(token=token)
     if len(Token_list) != 1:
-        return False, ""
+        return False, None
     Token = Token_list[0]
     Token.expire_time = datetime.now() + timedelta(minutes=10)
     Token.save()
     if len(Token_list) != 1:
-        return False, ""
+        return False, None
     Token = Token_list[0]
     Token.expire_time = datetime.now() + timedelta(minutes=10)
     user = Token.user

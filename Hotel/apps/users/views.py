@@ -458,8 +458,7 @@ class UserInfoView(View):
                 for key in data.keys():
                     if key not in ["username", "phone", "name", "nickname", "email", "gender", "age"]:
                         # status -3 Error data key data数据中必需key缺失 / data中有非预料中的key字段
-                        return JsonResponse(
-                            {"id": id, "status": -3, "message": "Error data key", "data": {}})
+                        return JsonResponse({"id": id, "status": -3, "message": "Error data key", "data": {}})
                 if "username" in data.keys():
                     username = data["username"]
                     if user.username != username:
@@ -643,6 +642,7 @@ class PortraitView(View):
             with open(os.path.join(settings.MEDIA_ROOT, "users", "error.jpg"), "rb") as f:
                 img_data = f.read()
             return HttpResponse(img_data, content_type="image/jpg")
+
     def post(self, request, *args, **kwargs):
         try:
             token = request.GET.get("token")

@@ -1201,6 +1201,419 @@ Please refer to [Global Status Table](#Global Status Table)
 
 Null
 
+# Face
+
+## Group - Create
+
+> **API Description**
+
+`POST`
+
+此API用于创建一个人员库，成功返回人员库id
+
+**此API有权限限制，仅管理员可用，其他人调用此API将返回`-103`状态码**
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/face/group`
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"group",
+    "subtype":"create",
+    "data":{
+        "group_name": "西和5幢人员库",
+        "group_content": "浙江科技学院西和公寓5幢人脸数据库"
+    }
+}
+```
+
+> **Data Param**
+
+|     Field     |  Type  | Length | Null | Default | **Description** |
+| :-----------: | :----: | :----: | :--: | :-----: | :-------------: |
+|  group_name   | string |   20   |      |         |   人员库名称    |
+| group_content | string |        |  √   |         |   人员库描述    |
+
+> **Notice**
+
+- `group_name`为不可重复字段，若创建的人员库名称与已有的重复，将返回`100`状态码
+
+> **Response Success Example**
+
+```python
+{
+    "id": 1234, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {
+        "group_id":5
+    }
+}
+```
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": -103, 
+    "message": "No Permission Operate", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -103   |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+| Status |          Message           |   Description    |
+| :----: | :------------------------: | :--------------: |
+|  100   | FaceGroup name has existed | 人员库名称已存在 |
+|  101   |  Create FaceGroup Failed   |  创建人员库失败  |
+
+## Group - Delete
+
+> **API Description**
+
+`POST`
+
+此API用于以`group_id`或者`group_name`为检索条件删除一个人员库，并同步删除里面所有的人脸数据
+
+**此API有权限限制，仅管理员可用，其他人调用此API将返回`-103`状态码**
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/face/group`
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"group",
+    "subtype":"delete",
+    "data":{
+        "group_id":5,
+        "group_name": "西和5幢人员库"
+    }
+}
+```
+
+> **Data Param**
+
+|   Field    |  Type  | Length | Null | Default | **Description** |
+| :--------: | :----: | :----: | :--: | :-----: | :-------------: |
+|  group_id  |  int   |        |      |    √    |    人员库id     |
+| group_name | string |   20   |      |    √    |   人员库名称    |
+
+> **Notice**
+
+- `group_id`与`group_name`二选一即可，若都传值过来，则选择`group_id`为检索条件。
+- `group_id`字段类型为`int`型，但若传递了整型字符串过来，也会自动转为`int`类型，转换失败返回`100`状态码
+- 若两个参数都没传过来，返回`101`状态码
+
+> **Response Success Example**
+
+```python
+{
+    "id": 1234, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {}
+}
+```
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": -103, 
+    "message": "No Permission Operate", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -103   |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+| Status |           Message           |        Description         |
+| :----: | :-------------------------: | :------------------------: |
+|  100   |       Error Group ID        |       错误的人员库ID       |
+|  101   | Need Group ID or Group name | 需要人员库ID或者人员库名称 |
+|  102   |        No such Group        |         无此人员库         |
+|  103   |     Delete Group Failed     |       删除人员库失败       |
+
+## Group - Update
+
+> **API Description**
+
+`POST`
+
+此API用于以`group_id`或者`group_name`为检索条件更新一个人员库描述（`group_content`）
+
+**此API有权限限制，仅管理员可用，其他人调用此API将返回`-103`状态码**
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/face/group`
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"group",
+    "subtype":"update",
+    "data":{
+        "group_id":5,
+        "group_name": "西和5幢人员库",
+        "group_content":"浙江科技学院西和公寓5幢人脸数据库123"
+    }
+}
+```
+
+> **Data Param**
+
+|     Field     |  Type  | Length | Null | Default | **Description** |
+| :-----------: | :----: | :----: | :--: | :-----: | :-------------: |
+|   group_id    |  int   |        |      |    √    |    人员库id     |
+|  group_name   | string |   20   |      |    √    |   人员库名称    |
+| group_content | string |        |      |         |   人员库描述    |
+
+> **Notice**
+
+- `group_id`与`group_name`二选一即可，若都传值过来，则选择`group_id`为检索条件。
+- `group_id`字段类型为`int`型，但若传递了整型字符串过来，也会自动转为`int`类型，转换失败返回`100`状态码
+- 若两个参数都没传过来，返回`101`状态码
+- 只能修改`group_content`的值，`group_name`与`group_id`只作为检索条件使用
+
+> **Response Success Example**
+
+```python
+{
+    "id": 1234, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {}
+}
+```
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": -103, 
+    "message": "No Permission Operate", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -103   |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+| Status |           Message           |        Description         |
+| :----: | :-------------------------: | :------------------------: |
+|  100   |       Error Group ID        |       错误的人员库ID       |
+|  101   | Need Group ID or Group name | 需要人员库ID或者人员库名称 |
+|  102   |        No such Group        |         无此人员库         |
+
+## Group - Get
+
+> **API Description**
+
+`POST`
+
+此API用于以`group_id`或者`group_name`为检索条件获取一个人员库信息
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/face/group`
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"group",
+    "subtype":"get",
+    "data":{
+        "group_id":5,
+        "group_name": "西和5幢人员库"
+    }
+}
+```
+
+> **Data Param**
+
+|     Field     |  Type  | Length | Null | Default | **Description** |
+| :-----------: | :----: | :----: | :--: | :-----: | :-------------: |
+|   group_id    |  int   |        |      |    √    |    人员库id     |
+|  group_name   | string |   20   |      |    √    |   人员库名称    |
+| group_content | string |        |      |         |   人员库描述    |
+
+> **Notice**
+
+- `group_id`与`group_name`二选一即可，若都传值过来，则选择`group_id`为检索条件。
+- `group_id`字段类型为`int`型，但若传递了整型字符串过来，也会自动转为`int`类型，转换失败返回`100`状态码
+- 若两个参数都没传过来，返回`101`状态码
+
+> **Response Success Example**
+
+```python
+{
+    "id": 1234, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {
+        "group_id": 5, 
+        "group_name": "西和5幢人员库", 
+        "group_content": "浙江科技学院西和公寓5幢人脸数据库"
+    }
+}
+```
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": -103, 
+    "message": "No Permission Operate", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -103   |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+| Status |           Message           |        Description         |
+| :----: | :-------------------------: | :------------------------: |
+|  100   |       Error Group ID        |       错误的人员库ID       |
+|  101   | Need Group ID or Group name | 需要人员库ID或者人员库名称 |
+|  102   |        No such Group        |         无此人员库         |
+
+## Group - List
+
+> **API Description**
+
+`POST`
+
+此API用于返回所有人员库信息
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/face/group`
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"group",
+    "subtype":"list",
+    "data":{}
+}
+```
+
+> **Data Param**
+
+null
+
+> **Response Success Example**
+
+```python
+{
+    "id": 1234, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {
+        "num": 2, 
+        "list": [
+            {
+                "group_id": 5, 
+                "group_name": "西和5幢人员库", 
+                "group_content": "浙江科技学院西和公寓5幢人脸数据库"
+            }, 
+            {
+                "group_id": 6, 
+                "group_name": "西和6幢人员库", 
+                "group_content": "浙江科技学院西和公寓6幢人脸数据库"
+            }
+        ]
+    }
+}
+```
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": -103, 
+    "message": "No Permission Operate", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+null
+
 # Global Status Table
 
 **所有的全局status值皆小于0**

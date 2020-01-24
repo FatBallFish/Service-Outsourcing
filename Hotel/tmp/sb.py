@@ -5,8 +5,10 @@ from extral_apps import MD5
 import base64, os
 
 headers = {"content-type": "application/json"}
+
 # # 发送手机短信
-# data = {"id": 0, "status": 0, "type": "sms", "subtype": "generate", "data": {"phone": "13750687010", "command_type": 3}}
+# data = {"id": 0, "status": 0, "type": "sms", "subtype": "generate",
+#         "data": {"phone": "13750687010", "command_type": 3}}
 # # response = requests.post(url="https://hotel.lcworkroom.cn/api/captcha/",data=json.dumps(data),headers=headers)
 # response = requests.post(url="http://127.0.0.1:8848/api/captcha/", data=json.dumps(data), headers=headers)
 # print(response.text)
@@ -31,7 +33,7 @@ headers = {"content-type": "application/json"}
 #     "data": {
 #         "username": "13750687010",
 #         "hash": md5,
-#         "enduring": 0,
+#         "enduring": 1,
 #     }
 # }
 # response = requests.post("http://127.0.0.1:8848/api/user/login/", data=json.dumps(data))
@@ -54,7 +56,8 @@ headers = {"content-type": "application/json"}
 # # response = requests.post("https://hotel.lcworkroom.cn/api/user/login/", data=json.dumps(data))
 # print(response.text)
 # token = response.json()["data"]["token"]
-token = "44613c5ae4cd8f79bc2afd8927faa137"
+
+token = "7e5758432106806d1c98d2aa6c803483"  # 13750687010
 
 # # Doki - GET模式
 # response = requests.get("http://127.0.0.1:8848/api/user/doki/?token={}".format(token))
@@ -64,22 +67,22 @@ token = "44613c5ae4cd8f79bc2afd8927faa137"
 # response = requests.post("http://127.0.0.1:8848/api/user/doki/?token={}".format(token))
 # # response = requests.post("https://hotel.lcworkroom.cn/api/user/doki/?token={}".format(token))
 # print(response.text)
-# 获取用户信息
-data = {
-    "id": 1234,
-    "type": "info",
-    "subtype": "get",
-    "data": {
-        "username": "123",
-    }
-}
-# post 形式
-response = requests.post("http://127.0.0.1:8848/api/user/info/?token={}".format(token), data=json.dumps(data))
-# response = requests.post("http://hotel.lcworkroom.cn/api/user/info/?token={}".format(token), data=json.dumps(data))
-print(response.text)
+# # 获取用户信息
+# data = {
+#     "id": 1234,
+#     "type": "info",
+#     "subtype": "get",
+#     "data": {
+#         "username": "123",
+#     }
+# }
+# # post 形式
+# # response = requests.post("http://127.0.0.1:8848/api/user/info/?token={}".format(token), data=json.dumps(data))
+# response = requests.post("https://hotel.lcworkroom.cn/api/user/info/?token={}".format(token), data=json.dumps(data))
+# print(response.text)
 # get形式
 # response = requests.get("http://127.0.0.1:8848/api/user/info/?token={}".format(token))
-# response = requests.get("http://hotel.lcworkroom.cn/api/user/info/?token={}".format(token))
+# response = requests.get("https://hotel.lcworkroom.cn/api/user/info/?token={}".format(token))
 # print(response.text)
 
 # # 更新用户信息
@@ -126,8 +129,57 @@ print(response.text)
 # # response = requests.post(url="https://hotel.lcworkroom.cn/api/user/portrait/?token={}".format(token), data=json.dumps(data), headers=headers)
 # print(response.text)
 
+# # 新建人员库
+# data = {"id": 0,
+#         "type": "group",
+#         "subtype": "create",
+#         "data": {"group_name": "西和6幢人员库", "group_content": "浙江科技学院西和公寓6幢人脸数据库"}}
+# response = requests.post(url="http://127.0.0.1:8848/api/face/group/?token={}".format(token), data=json.dumps(data),
+#                          headers=headers)
+# # response = requests.post(url="https://hotel.lcworkroom.cn/api/face/group/?token={}".format(token), data=json.dumps(data), headers=headers)
+# print(response.text)
 
-# # 新建用户人脸库
+# # 更新人员库
+# data = {"id": 0,
+#         "type": "group",
+#         "subtype": "update",
+#         "data": {"group_name": "西和5幢人员库", "group_content": "浙江科技学院西和公寓5幢人脸数据库"}}
+# response = requests.post(url="http://127.0.0.1:8848/api/face/group/?token={}".format(token), data=json.dumps(data),
+#                          headers=headers)
+# # response = requests.post(url="https://hotel.lcworkroom.cn/api/face/group/?token={}".format(token), data=json.dumps(data), headers=headers)
+# print(response.text)
+
+# # 删除人员库
+# data = {"id": 0,
+#         "type": "group",
+#         "subtype": "delete",
+#         "data": {"group_name": "西和5幢人员库"}}
+# response = requests.post(url="http://127.0.0.1:8848/api/face/group/?token={}".format(token), data=json.dumps(data),
+#                          headers=headers)
+# # response = requests.post(url="https://hotel.lcworkroom.cn/api/face/group/?token={}".format(token), data=json.dumps(data), headers=headers)
+# print(response.text)
+
+# 获取人员库信息
+data = {"id": 0,
+        "type": "group",
+        "subtype": "get",
+        "data": {"group_id": "5"}}
+response = requests.post(url="http://127.0.0.1:8848/api/face/group/?token={}".format(token), data=json.dumps(data),
+                         headers=headers)
+# response = requests.post(url="https://hotel.lcworkroom.cn/api/face/group/?token={}".format(token), data=json.dumps(data), headers=headers)
+print(response.text)
+
+# 获取人员库列表
+data = {"id": 0,
+        "type": "group",
+        "subtype": "list",
+        "data": {}}
+response = requests.post(url="http://127.0.0.1:8848/api/face/group/?token={}".format(token), data=json.dumps(data),
+                         headers=headers)
+# response = requests.post(url="https://hotel.lcworkroom.cn/api/face/group/?token={}".format(token), data=json.dumps(data), headers=headers)
+print(response.text)
+
+# # 注册用户人脸
 # with open(os.path.join(settings.BASE_DIR, "media", "tmp", "某某某.jpeg"), "rb") as f:
 #     file_data = f.read()
 # # print(file_data)
@@ -140,6 +192,7 @@ print(response.text)
 # # response = requests.post(url="http://127.0.0.1:8080/api/face/register/", data=json.dumps(data), headers=headers)
 # response = requests.post(url="https://hotel.lcworkroom.cn/api/face/register/", data=json.dumps(data), headers=headers)
 # print(response.text)
+
 
 # # 查询人脸
 # with open(os.path.join(settings.BASE_DIR, "media", "tmp", "19.jpeg"), "rb") as f:

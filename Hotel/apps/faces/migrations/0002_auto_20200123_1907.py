@@ -10,14 +10,19 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('tokens', '0001_initial'),
+        ('faces', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='tokens',
+            model_name='userface',
             name='user',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL, verbose_name='用户'),
+        ),
+        migrations.AddField(
+            model_name='facedata',
+            name='faces_group',
+            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='faces.FaceGroup', verbose_name='人员库'),
         ),
     ]

@@ -29,7 +29,7 @@ class DeviceGroup(BaseModel):
         db_table = "devices_faces_group"
 
     def __str__(self):
-        return "{device}:{group}".format(device=self.device.device_name, group=self.faces_group.group_name)
+        return "{device}:{group}".format(device=self.device.device_name, group=self.faces_group.name)
 
 
 class DeviceUser(BaseModel):

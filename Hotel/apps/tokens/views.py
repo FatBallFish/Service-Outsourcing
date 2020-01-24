@@ -1,10 +1,12 @@
 from django.shortcuts import render
 from django.views import View
-from django.http import JsonResponse,HttpResponse
+from django.http import JsonResponse, HttpResponse
 
 from apps.tokens.models import Tokens
 
-from datetime import datetime,timedelta
+from datetime import datetime, timedelta
+
+
 # Create your views here.
 class TokenDokiView(View):
     def get(self, request, *args, **kwargs):

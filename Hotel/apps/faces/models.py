@@ -38,12 +38,11 @@ class CosStorage(Storage):
 
 # Create your models here.
 class FaceGroup(BaseModel):
-    group_id = models.IntegerField(verbose_name="人员库ID", primary_key=True)
-    group_name = models.CharField(verbose_name="人员库名称", max_length=20)
-    group_content = models.TextField(verbose_name="人员库描述")
+    name = models.CharField(verbose_name="人员库名称", max_length=20, unique=True)
+    content = models.TextField(verbose_name="人员库描述", null=True)
 
     def __str__(self):
-        return self.group_name
+        return self.name
 
     class Meta:
         verbose_name = "人员库"
@@ -83,17 +82,17 @@ class FaceData(BaseModel):
     info_html = "<div>{}</div>"
 
     def group_id(self):
-        return format_html(self.info_html, self.faces_group.group_id)
+        return format_html(self.info_html, self.faces_group.id)
 
     group_id.short_description = "人员库id"
 
     def group_name(self):
-        return format_html(self.info_html, self.faces_group.group_name)
+        return format_html(self.info_html, self.faces_group.name)
 
     group_name.short_description = "人员库名称"
 
     def group_content(self):
-        return format_html(self.info_html, self.faces_group.group_content)
+        return format_html(self.info_html, self.faces_group.content)
 
     group_content.short_description = "人员库描述"
 
@@ -179,16 +178,16 @@ class UserFace(BaseModel):
     face_pic.short_description = "注册图片"  # 显示在列表表头的描述
 
     def group_id(self):
-        return format_html(self.info_html, self.face.faces_group.group_id)
+        return format_html(self.info_html, self.face.faces_group.id)
 
     group_id.short_description = "人员库id"
 
     def group_name(self):
-        return format_html(self.info_html, self.face.faces_group.group_name)
+        return format_html(self.info_html, self.face.faces_group.name)
 
     group_name.short_description = "人员库名称"
 
     def group_content(self):
-        return format_html(self.info_html, self.face.faces_group.group_content)
+        return format_html(self.info_html, self.face.faces_group.content)
 
     group_content.short_description = "人员库描述"

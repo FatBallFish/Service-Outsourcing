@@ -48,7 +48,7 @@ class HotelFaceGroupAdmin(admin.ModelAdmin):
     list_display = ('id', 'hotel', 'face_group')  # 列表中显示的字段
     list_display_links = list_display  # 列表中可点击跳转的字段
 
-    search_fields = ('hotel', 'face_group__group_name')  # 列表搜索字段
+    search_fields = ('hotel', 'face_group__name')  # 列表搜索字段
     list_filter = search_fields  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
 

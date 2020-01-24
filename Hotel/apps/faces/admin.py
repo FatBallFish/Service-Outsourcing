@@ -51,12 +51,12 @@ class FaceDataAdmin(admin.ModelAdmin):
 
 class FaceGroupAdmin(admin.ModelAdmin):
     fieldsets = (
-        ("人员库信息", {'fields': ('group_id', 'group_name', 'group_content')}),
+        ("人员库信息", {'fields': ('id', 'name', 'content')}),
     )
     # 参数：垂直布局：admin.VERTICAL  水平布局：admin.HORIZONTAL
     # readonly_fields = ("group_id",)
-
-    list_display = ('group_id', 'group_name', 'group_content')  # 列表中显示的字段
+    readonly_fields = ('id',)
+    list_display = ('id', 'name', 'content')  # 列表中显示的字段
     list_display_links = list_display  # 列表中可点击跳转的字段
 
     search_fields = list_display  # 列表搜索字段

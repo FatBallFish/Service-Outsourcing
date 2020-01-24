@@ -80,22 +80,6 @@ WSGI_APPLICATION = 'Hotel.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-#     }
-# }
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'ecc',
-#         'USER': 'ecc',
-#         'PASSWORD': 'wlc570Q0',
-#         'HOST': '5780e03864e11.sh.cdb.myqcloud.com',
-#         'PORT': 4201,
-#     }
-# }
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -191,3 +175,5 @@ STATICFILES_DIRS = [
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")  # 注意:这里配置os的时候,不像配置static的时候要[],这里不需要[]
 MEDIA_URL = "/media/"
 API_ROOT = 'api/'
+
+APPEND_SLASH = True
