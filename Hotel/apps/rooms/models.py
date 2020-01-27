@@ -8,7 +8,7 @@ from apps.faces.models import FaceGroup
 # Create your models here.
 class Hotel(BaseModel):
     name = models.CharField(verbose_name="酒店名称", max_length=100)
-    content = models.CharField(verbose_name="备注", max_length=100, null=True)
+    content = models.CharField(verbose_name="备注", max_length=100, blank=True, null=True)
     location = models.TextField(verbose_name="酒店地址")
 
     class Meta:
@@ -68,10 +68,10 @@ class HotelFaceGroup(BaseModel):
 class Room(BaseModel):
     floor = models.IntegerField(verbose_name="楼层")
     number = models.CharField(verbose_name="房间号", max_length=10)
-    name = models.CharField(verbose_name="房间名", max_length=10, null=True)
-    content = models.TextField(verbose_name="备注", null=True)
-    room_type_name = models.CharField(verbose_name="房间类型名称", max_length=50, null=True)
-    room_type_content = models.TextField(verbose_name="房间类型详细描述", null=True)
+    name = models.CharField(verbose_name="房间名", max_length=10, blank=True, null=True)
+    content = models.TextField(verbose_name="备注", blank=True, null=True)
+    room_type_name = models.CharField(verbose_name="房间类型名称", max_length=50, blank=True, null=True)
+    room_type_content = models.TextField(verbose_name="房间类型详细描述", blank=True, null=True)
     hotel = models.ForeignKey(verbose_name="酒店", to=Hotel, on_delete=models.CASCADE)
 
     class Meta:

@@ -6,6 +6,8 @@ from Hotel import settings
 
 from apps.users.models import Users
 from apps.tokens.models import Tokens, Doki2
+from apps.faces.models import FaceData
+from apps.realauth.models import RealAuth
 from extral_apps import MD5
 from extral_apps.m_redis import py_redis as Redis
 from extral_apps.m_img import py_captcha_main as ImgCaptcha
@@ -139,7 +141,7 @@ class UserLoginView(View):
                 except Exception as e:
                     # 用户不存在，即将创建
                     try:
-                        user = Users.objects.create_user(username=username, email="", password=username, phone=username)
+                        user = Users.objects.create_user(username=username, password=username, phone=username)
                         login_type = "create"
                     except Exception as e:
                         # status 100 用户不存在
@@ -398,12 +400,15 @@ class UserInfoView(View):
             # status -100 缺少必要的参数
             return JsonResponse({"id": -1, "status": -100, "message": "Missing necessary args", "data": {}})
         result, user = Doki2(token=token)
+        print("result:{},user:{}".format(result, user))
         if result == False:
             return JsonResponse({"id": -1, "status": -101, "message": "Error Token", "data": {}})
-
-        data_dict = {"id": user.id, "username": user.username, "name": user.last_name + user.first_name,
-                     "nickname": user.nickname,
-                     "age": user.age, "email": user.email, "phone": user.phone, "gender": user.gender}
+        real_auth_ID = None
+        if user.real_auth:
+            real_auth_ID = user.real_auth.ID
+        data_dict = {"id": user.id, "username": user.username, "nickname": user.nickname, "email": user.email,
+                     "phone": user.phone, "ID": real_auth_ID}
+        print(data_dict)
         return JsonResponse({"id": -1, "status": 0, "message": "Successful", "data": data_dict})
 
     def post(self, request, *args, **kwargs):
@@ -449,14 +454,17 @@ class UserInfoView(View):
                     except Exception as e:
                         return JsonResponse({"id": id, "status": 100, "message": "No Such User", "data": {}})
                 # 若username字段不存在，则自动使用Doki函数获取的user值
-                data_dict = {"id": user.id, "username": user.username, "name": user.last_name + user.first_name,
-                             "nickname": user.nickname, "age": user.age, "email": user.email, "phone": user.phone,
-                             "gender": user.gender}
+                real_auth_ID = None
+                if user.real_auth:
+                    real_auth_ID = user.real_auth.ID
+                data_dict = {"id": user.id, "username": user.username, "nickname": user.nickname, "email": user.email,
+                             "phone": user.phone, "ID": real_auth_ID}
+                print(data_dict)
                 return JsonResponse({"id": id, "status": 0, "message": "Successful", "data": data_dict})
             elif subtype == "update":  ## 用户信息更新api
                 # 判断指定所需字段是否存在，若不存在返回status -1 json。
                 for key in data.keys():
-                    if key not in ["username", "phone", "name", "nickname", "email", "gender", "age"]:
+                    if key not in ["username", "phone", "nickname", "email", "face_id", "real_auth_id"]:
                         # status -3 Error data key data数据中必需key缺失 / data中有非预料中的key字段
                         return JsonResponse({"id": id, "status": -3, "message": "Error data key", "data": {}})
                 if "username" in data.keys():
@@ -473,29 +481,26 @@ class UserInfoView(View):
                             return JsonResponse(
                                 {"id": id, "status": 102, "message": "No Permission Operation", "data": {}})
                 for key in data.keys():
-                    if key == "name":
-                        if data["name"] == "":
-                            first_name = ""
-                            last_name = ""
-                        else:
-                            name = list(data[key])
-                            last_name = name[0]
-                            first_name = "".join(name[1:])
-                        user.first_name = first_name
-                        user.last_name = last_name
-                    elif key == "nickname":
+                    if key == "nickname":
                         user.nickname = data[key]
                     elif key == "email":
                         user.email = data[key]
-                    elif key == "gender":
-                        if data[key] not in ["male", "female"]:
-                            continue
-                        else:
-                            user.gender = data[key]
                     elif key == "phone":
                         continue
-                    elif key == "age":
-                        user.age = int(data[key])
+                    elif key == "face_id":
+                        face_id = data[key]
+                        try:
+                            face = FaceData.objects.get(ID=face_id)
+                            user.face = face
+                        except Exception as e:
+                            return JsonResponse({"id": id, "status": 103, "message": "No Such Face", "data": {}})
+                    elif key == "real_auth_id":
+                        real_auth_ID = int(data[key])
+                        try:
+                            real_auth = RealAuth.objects.get(ID=real_auth_ID)
+                            user.real_auth = real_auth
+                        except Exception as e:
+                            return JsonResponse({"id": id, "status": 104, "message": "No Such RealAuth", "data": {}})
                 try:
                     user.save()
                 except Exception as e:

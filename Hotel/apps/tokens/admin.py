@@ -7,9 +7,9 @@ class TokensAdmin(admin.ModelAdmin):
     fieldsets = (
         ("Token信息", {'fields': ('token', 'expire_time', 'count', 'enduring')}),
         (
-        "用户", {'fields': ('user', 'user_username', 'user_name', 'user_age', 'user_gender', 'user_phone', 'user_image')})
+        "用户", {'fields': ('user', 'user_username', 'user_phone', 'user_image')})
     )
-    readonly_fields = ('count', 'user_username', 'user_name', 'user_age', 'user_gender', 'user_phone', 'user_image')
+    readonly_fields = ('count', 'user_username', 'user_phone', 'user_image')
     # 列表页显示内容
     list_display = ('token', 'user', 'expire_time', 'enduring')
     list_display_links = list_display  # 列表中可点击跳转的字段

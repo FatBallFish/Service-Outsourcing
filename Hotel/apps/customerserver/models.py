@@ -25,29 +25,10 @@ class CustomerServer(BaseModel):
 
     user_username.short_description = "用户名"
 
-    def user_name(self):
-        return format_html(self.info_html, self.user.last_name + self.user.first_name)
-
-    user_name.short_description = "姓名"
-
-    def user_age(self):
-        return format_html(self.info_html, self.user.age)
-
-    user_age.short_description = "年龄"
-
     def user_phone(self):
         return format_html(self.info_html, self.user.phone)
 
     user_phone.short_description = "手机号"
-
-    def user_gender(self):
-        if self.user.gender == 'male':
-            gender = "先生"
-        else:
-            gender = "女士"
-        return format_html(self.info_html, gender)
-
-    user_gender.short_description = "性别"
 
     def user_image(self):
         return format_html('<img src="/media/{}" style="width:64px;height:auto">', self.user.image)

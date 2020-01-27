@@ -6,9 +6,9 @@ from apps.customerserver.models import CustomerServer
 class CustomerServerAdmin(admin.ModelAdmin):
     fieldsets = (
         ("基本信息", {'fields': ('id', 'user', 'content')}),
-        ("用户信息", {'fields': ('user_username', 'user_name', 'user_age', 'user_gender', 'user_phone', 'user_image')}),
+        ("用户信息", {'fields': ('user_username', 'user_phone', 'user_image')}),
     )
-    readonly_fields = ('id', 'user_username', 'user_name', 'user_age', 'user_gender', 'user_phone', 'user_image')
+    readonly_fields = ('id', 'user_username', 'user_phone', 'user_image')
     # 列表页显示内容
     list_display = ('id', 'user', 'content')
     list_display_links = list_display  # 列表中可点击跳转的字段

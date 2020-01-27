@@ -76,7 +76,7 @@ if __name__ == '__main__':
     # pip install requests
     # pip install numpy
 
-    text = "肥宅本性"
+    text = "码到成功"
     # 上面改春联内容，若是竖联上下联间用空格隔开
     write_couplets(text,HorV="H",quality="M",out_file="./1.jpg")
     # 生成春联，具体参数可以看 write_couplets 函数里的注释

@@ -1,3 +1,7 @@
-from extral_apps import MD5
-string = MD5.md5("abcde","12345")
-print(string)
+from datetime import datetime
+
+today = datetime.now().date()
+date = datetime(2019, 1, 27).date()
+cha = today - date
+cha = (cha // 365).days
+print(cha)

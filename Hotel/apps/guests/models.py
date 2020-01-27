@@ -3,18 +3,15 @@ from django.utils.html import format_html
 
 from apps.users.models import Users, BaseModel
 from apps.rooms.models import Hotel, Room
+from apps.realauth.models import RealAuth
 from datetime import datetime
 
 
 # Create your models here.
 class Guests(BaseModel):
-    ID = models.CharField(verbose_name="身份证号", max_length=18, primary_key=True)
-    name = models.CharField(verbose_name="姓名", max_length=30)
-    age = models.IntegerField(verbose_name="年龄")
-    sex = models.CharField(verbose_name="性别", choices=(('male', "先生"), ('female', "女士")), max_length=6)
-    phone = models.CharField(verbose_name="手机号", max_length=11, null=True)
     # todo room 外键
-    user = models.ForeignKey(verbose_name="用户", to=Users, on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(verbose_name="用户", to=Users, on_delete=models.SET_NULL, blank=True, null=True)
+    real_auth = models.ForeignKey(verbose_name="实名认证库", to=RealAuth, on_delete=models.SET_NULL, blank=True, null=True)
 
     class Meta:
         verbose_name = "来宾"
@@ -22,7 +19,7 @@ class Guests(BaseModel):
         db_table = "guests"
 
     def __str__(self):
-        return "{}({})".format(self.name, self.sex)
+        return "{}({})".format(self.real_auth.name, self.real_auth.gender)
 
     info_html = "<div>{}</div>"
 
@@ -35,6 +32,11 @@ class Guests(BaseModel):
         return format_html(self.info_html, self.user.last_name + self.user.first_name)
 
     user_name.short_description = "姓名"
+
+    def user_nickname(self):
+        return format_html(self.info_html, self.user.nickname)
+
+    user_nickname.short_description = "昵称"
 
     def user_age(self):
         return format_html(self.info_html, self.user.age)
@@ -60,6 +62,60 @@ class Guests(BaseModel):
 
     user_image.short_description = "用户头像"
 
+    def auth_type(self):
+        id_type = {"sfz": "身份证", "other": "其他"}
+        return format_html(self.info_html, id_type[self.real_auth.id_type])
+
+    auth_type.short_description = "证件类型"
+
+    def auth_ID(self):
+        return format_html(self.info_html, self.real_auth.ID)
+
+    auth_ID.short_description = "证件号"
+
+    def auth_name(self):
+        return format_html(self.info_html, self.real_auth.name)
+
+    auth_name.short_description = "姓名"
+
+    def auth_gender(self):
+        return format_html(self.info_html, self.real_auth.gender)
+
+    auth_gender.short_description = "性别"
+
+    def auth_nation(self):
+        return format_html(self.info_html, self.real_auth.nation)
+
+    auth_nation.short_description = "民族"
+
+    def auth_age(self):
+        today = datetime.now().date()
+        differ = ((today - self.real_auth.birthday) // 365).days
+        return format_html(self.info_html, differ)
+
+    auth_age.short_description = "年龄"
+
+    def auth_birthday(self):
+        return format_html(self.info_html, self.real_auth.birthday)
+
+    auth_birthday.short_description = "出生年月"
+
+    def auth_address(self):
+        return format_html(self.info_html, self.real_auth.address)
+
+    auth_address.short_description = "住址"
+
+    def auth_organization(self):
+        return format_html(self.info_html, self.real_auth.organization)
+
+    auth_organization.short_description = "签发机关"
+
+    def auth_date(self):
+        date_str = "{} - {}".format(self.real_auth.date_start, self.real_auth.date_end)
+        return format_html(self.info_html, date_str)
+
+    auth_date.short_description = "有效期"
+
 
 class GuestRoom(models.Model):
     guest = models.ForeignKey(verbose_name="来宾", to=Guests, on_delete=models.CASCADE)
@@ -68,7 +124,7 @@ class GuestRoom(models.Model):
                               choices=(("booking", "预订中"), ("checkin", "已登记入住"), ("checkout", "已退房")), max_length=8,
                               default="booking")
     check_in_time = models.DateTimeField(verbose_name="入住时间", default=datetime.now)
-    check_out_time = models.DateTimeField(verbose_name="退房时间", null=True)
+    check_out_time = models.DateTimeField(verbose_name="退房时间", blank=True, null=True)
 
     class Meta:
         verbose_name = "来宾-房间"
@@ -76,34 +132,52 @@ class GuestRoom(models.Model):
         db_table = "guest_room"
 
     def __str__(self):
-        return "{}-{}({})".format(self.guest.name, self.room.name, self.status)
+        return "{}-{}({})".format(self.guest.real_auth.name, self.room.name, self.status)
 
     def guest_ID(self):
-        return format_html('<div>{}</div>', self.guest.ID)
+        return format_html('<div>{}</div>', self.guest.real_auth.ID)
 
     guest_ID.short_description = "身份证号"
 
     def guest_name(self):
-        return format_html('<div>{}</div>', self.guest.name)
+        return format_html('<div>{}</div>', self.guest.real_auth.name)
 
     guest_name.short_description = "姓名"
 
+    def guest_nation(self):
+        return format_html('<div>{}</div>', self.guest.real_auth.nation)
+
+    guest_nation.short_description = "民族"
+
+    def guest_birthday(self):
+        return format_html('<div>{}</div>', self.guest.real_auth.birthday)
+
+    guest_birthday.short_description = "出生年月"
+
+    def guest_address(self):
+        return format_html('<div>{}</div>', self.guest.real_auth.address)
+
+    guest_address.short_description = "住址"
+
     def guest_age(self):
-        return format_html('<div>{}</div>', self.guest.age)
+        today = datetime.now().date()
+        differ = (today - self.guest.real_auth.birthday) // 365
+        differ = differ.days
+        return format_html('<div>{}</div>', differ)
 
     guest_age.short_description = "年龄"
 
-    def guest_sex(self):
-        if self.guest.sex == "male":
-            sex = "先生"
+    def guest_gender(self):
+        if self.guest.real_auth.gender == "male":
+            gender = "先生"
         else:
-            sex = "女士"
-        return format_html('<div>{}</div>', sex)
+            gender = "女士"
+        return format_html('<div>{}</div>', gender)
 
-    guest_sex.short_description = "性别"
+    guest_gender.short_description = "性别"
 
     def guest_phone(self):
-        return format_html('<div>{}</div>', self.guest.phone)
+        return format_html('<div>{}</div>', self.guest.user.phone)
 
     guest_phone.short_description = "手机号"
 
@@ -139,13 +213,8 @@ class GuestRoom(models.Model):
 
 
 class Visitor(BaseModel):
-    ID = models.CharField(verbose_name="身份证号", max_length=18, primary_key=True)
-    name = models.CharField(verbose_name="姓名", max_length=30)
-    age = models.IntegerField(verbose_name="年龄")
-    sex = models.CharField(verbose_name="性别", choices=(('male', "先生"), ('female', "女士")), max_length=6)
-    phone = models.CharField(verbose_name="手机号", max_length=11, null=True)
-    # todo room 外键
-    user = models.ForeignKey(verbose_name="用户", to=Users, on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(verbose_name="用户", to=Users, on_delete=models.SET_NULL, blank=True, null=True)
+    real_auth = models.ForeignKey(verbose_name="实名认证库", to=RealAuth, on_delete=models.SET_NULL, blank=True, null=True)
 
     class Meta:
         verbose_name = "访客"
@@ -153,7 +222,7 @@ class Visitor(BaseModel):
         db_table = "visitors"
 
     def __str__(self):
-        return "{}({})".format(self.name, self.sex)
+        return "{}({})".format(self.real_auth.name, self.real_auth.gender)
 
     info_html = "<div>{}</div>"
 
@@ -167,29 +236,74 @@ class Visitor(BaseModel):
 
     user_name.short_description = "姓名"
 
-    def user_age(self):
-        return format_html(self.info_html, self.user.age)
+    def user_nickname(self):
+        return format_html(self.info_html, self.user.nickname)
 
-    user_age.short_description = "年龄"
+    user_nickname.short_description = "昵称"
 
     def user_phone(self):
         return format_html(self.info_html, self.user.phone)
 
     user_phone.short_description = "手机号"
 
-    def user_gender(self):
-        if self.user.gender == 'male':
-            gender = "先生"
-        else:
-            gender = "女士"
-        return format_html(self.info_html, gender)
-
-    user_gender.short_description = "性别"
-
     def user_image(self):
         return format_html('<img src="/media/{}" style="width:64px;height:auto">', self.user.image)
 
     user_image.short_description = "用户头像"
+
+    def auth_type(self):
+        id_type = {"sfz": "身份证", "other": "其他"}
+        return format_html(self.info_html, id_type[self.real_auth.id_type])
+
+    auth_type.short_description = "证件类型"
+
+    def auth_ID(self):
+        return format_html(self.info_html, self.real_auth.ID)
+
+    auth_ID.short_description = "证件号"
+
+    def auth_name(self):
+        return format_html(self.info_html, self.real_auth.name)
+
+    auth_name.short_description = "姓名"
+
+    def auth_gender(self):
+        return format_html(self.info_html, self.real_auth.gender)
+
+    auth_gender.short_description = "性别"
+
+    def auth_nation(self):
+        return format_html(self.info_html, self.real_auth.nation)
+
+    auth_nation.short_description = "民族"
+
+    def auth_age(self):
+        today = datetime.now().date()
+        differ = ((today - self.real_auth.birthday) // 365).days
+        return format_html(self.info_html, differ)
+
+    auth_age.short_description = "年龄"
+
+    def auth_birthday(self):
+        return format_html(self.info_html, self.real_auth.birthday)
+
+    auth_birthday.short_description = "出生年月"
+
+    def auth_address(self):
+        return format_html(self.info_html, self.real_auth.address)
+
+    auth_address.short_description = "住址"
+
+    def auth_organization(self):
+        return format_html(self.info_html, self.real_auth.organization)
+
+    auth_organization.short_description = "签发机关"
+
+    def auth_date(self):
+        date_str = "{} - {}".format(self.real_auth.date_start, self.real_auth.date_end)
+        return format_html(self.info_html, date_str)
+
+    auth_date.short_description = "有效期"
 
 
 class GuestVisitor(models.Model):
@@ -199,8 +313,8 @@ class GuestVisitor(models.Model):
     status = models.CharField(verbose_name="申请状态",
                               choices=(("applying", "申请中"), ("accept", "允许访问"), ("refuse", "拒绝访问")), default="applying",
                               max_length=8)
-    visitor_content = models.TextField(verbose_name="访客申请内容", null=True)
-    guest_content = models.TextField(verbose_name="来宾回复内容", null=True)
+    visitor_content = models.TextField(verbose_name="访客申请内容", blank=True, null=True)
+    guest_content = models.TextField(verbose_name="来宾回复内容", blank=True, null=True)
 
     class Meta:
         verbose_name = "访客申请记录"
@@ -213,60 +327,95 @@ class GuestVisitor(models.Model):
     info_html = "<div>{}</div>"
 
     def guest_ID(self):
-        return format_html(self.info_html, self.guest.ID)
+        return format_html('<div>{}</div>', self.guest.real_auth.ID)
 
     guest_ID.short_description = "身份证号"
 
     def guest_name(self):
-        return format_html(self.info_html, self.guest.name)
+        return format_html('<div>{}</div>', self.guest.real_auth.name)
 
     guest_name.short_description = "姓名"
 
+    def guest_nation(self):
+        return format_html('<div>{}</div>', self.guest.real_auth.nation)
+
+    guest_nation.short_description = "民族"
+
+    def guest_birthday(self):
+        return format_html('<div>{}</div>', self.guest.real_auth.birthday)
+
+    guest_birthday.short_description = "出生年月"
+
+    def guest_address(self):
+        return format_html('<div>{}</div>', self.guest.real_auth.address)
+
+    guest_address.short_description = "住址"
+
     def guest_age(self):
-        return format_html(self.info_html, self.guest.age)
+        today = datetime.now().date()
+        year = (today - self.guest.real_auth.birthday) // 365
+        year = year.days
+        return format_html('<div>{}</div>', year)
 
     guest_age.short_description = "年龄"
 
-    def guest_sex(self):
-        if self.guest.sex == 'male':
+    def guest_gender(self):
+        if self.guest.real_auth.gender == "male":
             gender = "先生"
         else:
             gender = "女士"
-        return format_html(self.info_html, gender)
+        return format_html('<div>{}</div>', gender)
 
-    guest_sex.short_description = "性别"
+    guest_gender.short_description = "性别"
 
     def guest_phone(self):
-        return format_html(self.info_html, self.guest.phone)
+        return format_html('<div>{}</div>', self.guest.user.phone)
 
     guest_phone.short_description = "手机号"
 
     def visitor_ID(self):
-        return format_html(self.info_html, self.visitor.ID)
+        return format_html(self.info_html, self.visitor.real_auth.ID)
 
     visitor_ID.short_description = "身份证号"
 
     def visitor_name(self):
-        return format_html(self.info_html, self.visitor.name)
+        return format_html(self.info_html, self.visitor.real_auth.name)
 
     visitor_name.short_description = "姓名"
 
+    def visitor_nation(self):
+        return format_html('<div>{}</div>', self.visitor.real_auth.nation)
+
+    visitor_nation.short_description = "民族"
+
+    def visitor_birthday(self):
+        return format_html('<div>{}</div>', self.visitor.real_auth.birthday)
+
+    visitor_birthday.short_description = "出生年月"
+
+    def visitor_address(self):
+        return format_html('<div>{}</div>', self.visitor.real_auth.address)
+
+    visitor_address.short_description = "住址"
+
     def visitor_age(self):
-        return format_html(self.info_html, self.visitor.age)
+        today = datetime.now().date()
+        year = (today - self.visitor.real_auth.birthday) // 365
+        year = year.days
+        return format_html('<div>{}</div>', year)
 
     visitor_age.short_description = "年龄"
 
-    def visitor_sex(self):
-        if self.visitor.sex == 'male':
+    def visitor_gender(self):
+        if self.visitor.real_auth.gender == 'male':
             gender = "先生"
         else:
             gender = "女士"
         return format_html(self.info_html, gender)
 
-    visitor_sex.short_description = "性别"
+    visitor_gender.short_description = "性别"
 
     def visitor_phone(self):
-        return format_html(self.info_html, self.visitor.phone)
+        return format_html(self.info_html, self.visitor.user.phone)
 
     visitor_phone.short_description = "手机号"
-

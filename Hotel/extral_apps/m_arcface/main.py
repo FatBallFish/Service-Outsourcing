@@ -1,7 +1,7 @@
 import logging
 import os, json
 from typing import Dict, Generator
-import platform,sys
+import platform, sys
 import numpy as np
 
 from Hotel import settings
@@ -25,11 +25,11 @@ def _draw_face_info(image: np.ndarray, face_info: FaceInfo) -> dict:
     rect = face_info.rect
     print(face_info.gender, type(face_info.gender))
     json_dict = {
-        "name": face_info.name,
+        "ID": face_info.ID,
         "age": face_info.age,
-        "threshold": "{:.2f}".format(face_info.threshold),
+        "threshold": float("{:.2f}".format(face_info.threshold)),
         "gender": face_info.get_gender(),
-        "liveness": "{}".format("真" if face_info.liveness else "假"),
+        "liveness": True if face_info.liveness else False,
         "top_left": rect.top_left,
         "top_right": rect.top_right,
         "bottom_left": rect.bottom_left,
@@ -119,7 +119,7 @@ def _run_1_n(image_source: ImageSource, face_process: FaceProcess) -> None:
 
 
 @timer(output=_logger.info)
-def _run_m_n(image_source: ImageSource, face_process: FaceProcess) -> dict:
+def _run_m_n(image_source: ImageSource, face_process: FaceProcess,type:str="name") -> dict:
     """
     m:n 的整个处理的逻辑
     :image_source: 识别图像的源头
@@ -178,16 +178,25 @@ def _run_m_n(image_source: ImageSource, face_process: FaceProcess) -> dict:
 
 
 @timer(output=_logger.info)
-def addFace(path: str, name: str):
-    face_process.add_features(path, name)
-    face_process.dump_features_append(name)
+def addFace(path: str, name: str, ID: str):
+    face_process.add_features(path_name=path, ID=ID)
+    face_process.dump_features_append(name, ID)
 
 
 @timer(output=_logger.info)
-def checkFace(path: str) -> dict:
+def checkFace(path: str,db:int=-1,user=None) -> dict:
+    reload_features(db=db,user=user)
     image_source = LocalImage(path=path)
-    json_dict = run(image_source, face_process)
+    json_dict = {}
+    # run = _run_m_n
+    with image_source:
+        json_dict = run(image_source, face_process)
     return json_dict
+
+
+@timer(output=_logger.info)
+def reload_features(db: int = -1,user=None):
+    face_process.reload_features(db=db,user=user)
 
 
 @timer(output=_logger.info)
@@ -196,16 +205,10 @@ def Initialize(single: bool = False):
         format="[%(levelname)s] %(message)s [%(threadName)s:%(name)s:%(lineno)s]",
         level=logging.INFO
     )
-
-    # 读取配置文件
-    # with open("profile.yml", "r", encoding="utf-8") as file:
-    #     profile: Dict[str, str] = yaml.load(file, yaml.Loader)
-    #     args.app_id = profile["app-id"].encode()
-    #     args.sdk_key = profile["sdk-key"].encode()
     ArcFace.APP_ID = settings.ARCFACE_APPID.encode("utf8")
     system = platform.system()
     bits = "32" if platform.architecture()[0] == "32bit" else "64"
-    _logger.info("System:{} {}bit".format(system,bits))
+    _logger.info("System:{} {}bit".format(system, bits))
     if system == "Windows":
         if bits == "64":
             ArcFace.SDK_KEY = settings.ARCFACE_KEY_Win64.encode("utf8")
@@ -222,6 +225,7 @@ def Initialize(single: bool = False):
         sys.exit()
     # pic_path = "./database"
     # cache_path = './cache/cache.txt'
+
     global face_process
     face_process = FaceProcess()
     face_process.load_features()

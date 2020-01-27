@@ -5,35 +5,39 @@ from apps.guests.models import Guests, GuestRoom, Visitor, GuestVisitor
 
 
 # Register your models here.
-
+# todo 全部重改
 class GuestsAdmin(admin.ModelAdmin):
     # 编辑界面
     fieldsets = (
-        ("基本信息", {'fields': ('ID', 'name', 'sex', 'age', 'phone')}),
-        ("账号信息",
-         {"fields": ("user", 'user_username', 'user_name', 'user_age', 'user_gender', 'user_phone', 'user_image')}),
+        ("实名信息", {'fields': (
+            'real_auth', 'auth_ID', 'auth_name', 'auth_gender', 'auth_nation', 'auth_age', 'auth_birthday',
+            'auth_address',
+            'auth_organization', 'auth_date')}),
+        ("绑定账号信息",
+         {"fields": ("user", 'user_username', 'user_nickname', 'user_phone', 'user_image')}),
     )
-    radio_fields = {"sex": admin.HORIZONTAL}  # 以单选框形式显示内容，默认为组合框。
-    # 参数：垂直布局：admin.VERTICAL  水平布局：admin.HORIZONTAL
-    readonly_fields = ('user_username', 'user_name', 'user_age', 'user_gender', 'user_phone', 'user_image')
+    readonly_fields = (
+        'auth_ID', 'auth_name', 'auth_gender', 'auth_nation', 'auth_age', 'auth_birthday', 'auth_address',
+        'auth_organization', 'auth_date', 'user_username', 'user_nickname', 'user_phone', 'user_image')
     # 显示界面
     # fields 和 fieldsets不能共存
-    list_display = ('ID', 'name', 'sex', 'age', 'phone')  # 列表中显示的字段
+    list_display = ('auth_name', 'auth_gender', 'auth_age', 'auth_nation', 'user')  # 列表中显示的字段
     # list_display_links = list_display  # 列表中可点击跳转的字段
     list_display_links = list_display  # 列表中可点击跳转的字段
     # list_editable = ('content', 'sex', 'faces_group')  # 列表中可编辑的字段,注意：可list_display_links与list_editable不可使用相同字段
     # list_editable = ('faces_group',)  # 列表中可编辑的字段,注意：可list_display_links与list_editable不可使用相同字段
     # 上面那个有点难看，取消
 
-    search_fields = ('ID', 'name', 'phone')  # 列表搜索字段
-    list_filter = ('ID', 'name', 'phone')  # 列表筛选字段
+    search_fields = ('real_auth__ID', 'real_auth__name', 'auth_address', 'user__phone')  # 列表搜索字段
+    list_filter = (
+        'real_auth__ID', 'real_auth__name', 'real_auth__gender', 'real_auth__birthday', 'user__phone')  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
 
 
 class GuestRoomAdmin(admin.ModelAdmin):
     # 编辑界面
     fieldsets = (
-        ("来宾信息", {'fields': ('guest', "guest_ID", "guest_name", "guest_sex", "guest_age", "guest_phone")}),
+        ("来宾信息", {'fields': ('guest', "guest_ID", "guest_name", "guest_gender", "guest_age", "guest_phone")}),
         ("房间信息",
          {"fields": ("room", "room_hotel", "room_floor", "room_number", "room_name", "room_content", "room_type"),
           "classes": ("collaspe", 'wide'),
@@ -43,7 +47,7 @@ class GuestRoomAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = (
-        "guest_ID", "guest_name", "guest_sex", "guest_age", "guest_phone", "room_hotel", "room_floor", "room_number",
+        "guest_ID", "guest_name", "guest_gender", "guest_age", "guest_phone", "room_hotel", "room_floor", "room_number",
         "room_name", "room_content", "room_type")
     # 显示界面
     # fields 和 fieldsets不能共存
@@ -68,32 +72,36 @@ class GuestRoomAdmin(admin.ModelAdmin):
     # list_editable = ('faces_group',)  # 列表中可编辑的字段,注意：可list_display_links与list_editable不可使用相同字段
     # 上面那个有点难看，取消
 
-    search_fields = ('guest__ID','guest__name', 'room__hotel', 'room', 'status')  # 列表搜索字段
-    list_filter = ('guest__name', 'room__hotel', 'room', 'status', 'check_in_time', 'check_out_time')  # 列表筛选字段
+    search_fields = ('guest__real_auth__ID', 'guest__real_auth__name', 'room__hotel', 'room', 'status')  # 列表搜索字段
+    list_filter = (
+        'guest__real_auth__name', 'room__hotel', 'room', 'status', 'check_in_time', 'check_out_time')  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
 
 
 class VisitorAdmin(admin.ModelAdmin):
     # 编辑界面
     fieldsets = (
-        ("基本信息", {'fields': ('ID', 'name', 'sex', 'age', 'phone')}),
-        ("账号信息",
-         {"fields": ("user", 'user_username', 'user_name', 'user_age', 'user_gender', 'user_phone', 'user_image')}),
+        ("实名信息", {'fields': (
+            'real_auth', 'auth_ID', 'auth_name', 'auth_gender', 'auth_nation', 'auth_age', 'auth_birthday',
+            'auth_address', 'auth_organization', 'auth_date')}),
+        ("绑定账号信息",
+         {"fields": ("user", 'user_username', 'user_nickname', 'user_phone', 'user_image')}),
     )
-    radio_fields = {"sex": admin.HORIZONTAL}  # 以单选框形式显示内容，默认为组合框。
-    # 参数：垂直布局：admin.VERTICAL  水平布局：admin.HORIZONTAL
-    readonly_fields = ('user_username', 'user_name', 'user_age', 'user_gender', 'user_phone', 'user_image')
+    readonly_fields = (
+        'auth_ID', 'auth_name', 'auth_gender', 'auth_nation', 'auth_age', 'auth_birthday', 'auth_address',
+        'auth_organization', 'auth_date', 'user_username', 'user_nickname', 'user_phone', 'user_image')
     # 显示界面
     # fields 和 fieldsets不能共存
-    list_display = ('ID', 'name', 'sex', 'age', 'phone')  # 列表中显示的字段
+    list_display = ('auth_name', 'auth_gender', 'auth_age', 'auth_nation', 'user')  # 列表中显示的字段
     # list_display_links = list_display  # 列表中可点击跳转的字段
     list_display_links = list_display  # 列表中可点击跳转的字段
     # list_editable = ('content', 'sex', 'faces_group')  # 列表中可编辑的字段,注意：可list_display_links与list_editable不可使用相同字段
     # list_editable = ('faces_group',)  # 列表中可编辑的字段,注意：可list_display_links与list_editable不可使用相同字段
     # 上面那个有点难看，取消
 
-    search_fields = ('ID', 'name', 'phone')  # 列表搜索字段
-    list_filter = ('ID', 'name', 'phone')  # 列表筛选字段
+    search_fields = ('real_auth__ID', 'real_auth__name', 'auth_address', 'user__phone')  # 列表搜索字段
+    list_filter = (
+        'real_auth__ID', 'real_auth__name', 'real_auth__gender', 'real_auth__birthday', 'user__phone')  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
 
 
@@ -105,9 +113,8 @@ class GuestVisitorAdmin(admin.ModelAdmin):
         ("来宾信息", {"fields": ('guest_ID', 'guest_name', 'guest_sex', 'guest_age', 'guest_phone')}),
     )
     readonly_fields = (
-        'visitor_ID', 'visitor_name', 'visitor_sex', 'visitor_age', 'visitor_phone', 'guest_ID', 'guest_name',
-        'guest_sex',
-        'guest_age', 'guest_phone')
+        'visitor_ID', 'visitor_name', 'visitor_gender', 'visitor_age', 'visitor_phone', 'guest_ID', 'guest_name',
+        'guest_gender', 'guest_age', 'guest_phone')
     # 显示界面
     # fields 和 fieldsets不能共存
     list_display = ('id', 'guest', 'visitor', 'apply_time', 'read_status')  # 列表中显示的字段
@@ -125,7 +132,10 @@ class GuestVisitorAdmin(admin.ModelAdmin):
         return format_html('<div style="color:{};">{}</div>', color, status)
 
     list_display_links = list_display  # 列表中可点击跳转的字段
-    search_fields = ('guest__name', 'guest__phone', 'visitor__name', 'visitor__phone', 'apply_time', 'status')  # 列表搜索字段
+    search_fields = (
+        'guest__real_auth__name', 'guest__user__phone', 'visitor__real_auth__name', 'visitor__user__phone',
+        'apply_time',
+        'status')  # 列表搜索字段
     list_filter = search_fields  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
 

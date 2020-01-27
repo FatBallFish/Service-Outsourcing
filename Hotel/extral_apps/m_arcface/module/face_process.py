@@ -22,7 +22,8 @@ from extral_apps.m_arcface.module.image_source import get_regular_file, read_ima
 
 from Hotel import settings
 from extral_apps import MD5
-from apps.faces.models import FaceData
+from apps.users.models import Users
+from apps.faces.models import FaceData, FaceGroup
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.DEBUG)
@@ -39,7 +40,7 @@ class FaceInfo:
         self.arc_face_info: ArcFaceInfo = arc_face_info
         self._image = np.array([])
 
-        self.name = ""
+        self.ID = ""
         self.threshold: float = 0.0
 
         self.liveness = None
@@ -89,7 +90,7 @@ class FaceInfo:
         :return: 所有信息都存在返回 True，否则返回 False
         """
         return all((
-            bool(self.name),
+            bool(self.ID),
             self.liveness is not None,
             self.age is not None,
             self.gender is not None,
@@ -105,8 +106,8 @@ class FaceInfo:
     def __str__(self):
         to_str = FaceInfo._to_str
         return "%s,%s,%s,%s,%s" % (
-            self.name,
-            to_str(self.threshold, bool(self.name), "%.2f" % self.threshold, ""),
+            self.ID,
+            to_str(self.threshold, bool(self.ID), "%.2f" % self.threshold, ""),
             to_str(self.liveness, self.liveness, "真", "假"),
             to_str(self.gender, self.gender == Gender.Male, "男", "女"),
             to_str(self.age, True, self.age, self.age)
@@ -156,7 +157,7 @@ class FaceProcess:
         face_info.image = image
 
         if face_info.stop_flags[0]:
-            _logger.debug("人脸 %d: 获取姓名" % face_info.arc_face_info.face_id)
+            _logger.debug("人脸 %d: 获取身份ID" % face_info.arc_face_info.face_id)
             face_info.stop_flags[0] = False
             future: Future = self._executors[0].submit(self._update_name, face_info)
             future.add_done_callback(lambda x: FaceProcess._update_name_done(face_info, x))
@@ -225,21 +226,26 @@ class FaceProcess:
             return "", 0.0
 
         max_threshold = 0.0
-        opt_name = ""
-        for name, feature_ in self._features.items():
-            threshold = self._arcface.compare_feature(feature, feature_)
+        opt_ID = ""
+        for ID, feature_ in self._features.items():
+            # todo 修改name为ID
+            try:
+                threshold = self._arcface.compare_feature(feature, feature_)
+            except Exception as e:
+                _logger.warning(e)
+                return "", 0.0
             if max_threshold < threshold:
                 max_threshold = threshold
-                opt_name = name
+                opt_ID = ID
         if 0.8 < max_threshold:
-            _logger.debug("人脸 %d: 识别成功，与 %s 相似度 %.2f" % (face_id, opt_name, max_threshold))
-            return opt_name, max_threshold
-        _logger.debug("人脸 %d: 识别失败，与最像的 %s 的相似度 %.2f" % (face_id, opt_name, max_threshold))
+            _logger.debug("人脸 %d: 识别成功，与 %s 相似度 %.2f" % (face_id, opt_ID, max_threshold))
+            return opt_ID, max_threshold
+        _logger.debug("人脸 %d: 识别失败，与最像的 %s 的相似度 %.2f" % (face_id, opt_ID, max_threshold))
         return "", 0.0
 
     @staticmethod
     def _update_name_done(face_info: FaceInfo, future: Future):
-        face_info.name, face_info.threshold = future.result()
+        face_info.ID, face_info.threshold = future.result()
         face_info.stop_flags[0] = True
         face_info.updated_flags[0] = True
 
@@ -249,33 +255,28 @@ class FaceProcess:
         :filename: 保存人脸数据库的文件名
         :return: 保存的人脸数
         """
-        # with open(filename, "w", encoding="utf-8") as file:
-        #     for name, feature in self._features.items():
-        #         file.write(name)
-        #         file.write(":")
-        #         file.write(base64.b64encode(feature).decode())
-        #         file.write("\n")
-        for name, feature in self._features.items():
+        for ID, feature in self._features.items():
             facedata = FaceData()
-            facedata.name = name
+            facedata.ID = ID
             facedata.sign = base64.b64encode(feature).decode()
             # facedata.pic = settings.COS_ROOTURL + "facedata/" + MD5.md5(name) + ".jpg"
-            facedata.pic = "faces_data/" + MD5.md5(name) + ".face"
+            facedata.pic = "faces_data/" + MD5.md5(ID) + ".face"
             facedata.update_time = datetime.now()
             facedata.save()
         return len(self._features)
 
-    def dump_features_append(self, name: str) -> int:
+    def dump_features_append(self, name: str, ID: str) -> int:
         """
         将已有的人脸数据库追加保存到文件
         :filename: 保存人脸数据库的文件名
         :return: 保存的人脸数
         """
+        # TODO 将所有的name改成ID，ID改成name
         for key in self._features.keys():
-            if key == name:
+            if key == ID:
                 break
         else:
-            _logger.error("{name}的人脸信息不存在！".format(name=name))
+            _logger.error("{ID}的人脸信息不存在！".format(ID=ID))
             return 0
         # with open(filename, "a", encoding="utf-8") as file:
         #     feature = self._features[name]
@@ -283,16 +284,16 @@ class FaceProcess:
         #     file.write(":")
         #     file.write(base64.b64encode(feature).decode())
         #     file.write("\n")
-        feature = self._features[name]
+        feature = self._features[ID]
         base_data: str = base64.b64encode(feature).decode()
         # pic = settings.COS_ROOTURL + "facedata/" + MD5.md5(name) + ".jpg"
-        pic = "faces_data/" + MD5.md5(name) + ".face"
+        pic = "faces_data/" + MD5.md5(ID) + ".face"
 
         defaults = {"sign": base_data, "pic": pic, "update_time": datetime.now()}
-        FaceData.objects.update_or_create(defaults=defaults, name=name)
+        FaceData.objects.update_or_create(defaults=defaults, ID=ID, name=name)
         return len(self._features)
 
-    def load_features(self) -> int:
+    def load_features(self, db: int = -1) -> int:
         """
         从先前保存的人脸数据库加载数据
         :param filename: 保存人脸数据库的文件名
@@ -307,27 +308,77 @@ class FaceProcess:
         #         self._features[name] = feature
         #         count += 1
         #         line = file.readline()
-        face_list = FaceData.objects.all()
+        face_list = []
+        if db == -1:
+            face_list = FaceData.objects.all()
+        else:
+            try:
+                face_group = FaceGroup.objects.get(id=db)
+                face_list = FaceData.objects.filter(faces_group=face_group)
+            except Exception as e:
+                _logger.info("人员库id[{}] 对应的人员库不存在".format(db))
         for face_data in face_list:
+            ID = face_data.ID
             name = face_data.name
-            feature = face_data.sign
-            self._features[name] = feature
+            feature = base64.b64decode(face_data.sign)
+            # print("[{}]:{}".format(name, feature))
+            self._features[ID] = feature
             count += 1
         _logger.info("从 \"数据库\" 中加载了 %d 个特征值" % (count))
         return count
 
-    def add_features(self, path_name: str, name: str) -> int:
+    def reload_features(self, db: int = -1, user: Users = None) -> int:
+        """
+        从先前保存的人脸数据库加载数据
+        :param filename: 保存人脸数据库的文件名
+        :return: 加载的人脸数
+        """
+        # todo 更改name为ID
+        count = 0
+        face_list = []
+        face_group = None
+        self._features.clear()
+        if user:
+            face_data = user.face
+            ID = face_data.ID
+            name = face_data.name
+            feature = base64.b64decode(face_data.sign)
+            self._features[ID] = feature
+            count += 1
+        else:
+            if db == -1:
+                face_list = FaceData.objects.all()
+            else:
+                try:
+                    face_group = FaceGroup.objects.get(id=db)
+                    face_list = FaceData.objects.filter(faces_group=face_group)
+                except Exception as e:
+                    _logger.info("人员库id[{}] 对应的人员库不存在".format(db))
+            for face_data in face_list:
+                ID = face_data.ID
+                name = face_data.name
+                feature = base64.b64decode(face_data.sign)
+                self._features[ID] = feature
+                count += 1
+            if face_group:
+                _logger.info("从 人员库\"%s\" 中重加载了 %d 个特征值" % (face_group.name, count))
+            else:
+                _logger.info("从 \"全部人员库\" 中重加载了 %d 个特征值" % (count))
+        return count
+
+    def add_features(self, path_name: str, ID: str) -> int:
         """
         将本地文件夹或者本地图片所有用户的特征值添加人脸数据库
         :param path_name: 文件夹名或者图片路径名
-        :param name: 人脸姓名
+        :param ID: 人脸身份ID
         :return: 成功添加的人脸数
         """
-        features = self._load_all_features(path_name, name)
+        features = self._load_all_features(path_name, ID)
+        print("features:", features)
         self._features.update(features)
         return len(features)
 
-    def _load_all_features(self, path_name: str, name: str) -> Dict[str, bytes]:
+    def _load_all_features(self, path_name: str, ID: str) -> Dict[str, bytes]:
         """
         从本地文件夹或者本地图片加载所有用户的特征值
         如果从图片中加载，则用户名是数字 ID（类型依然是字符串）
@@ -335,6 +386,7 @@ class FaceProcess:
         :type path_name: 文件夹名或者图片路径名
         :return: 包含所有特征值的 map<姓名, 特征值>
         """
+        # TODO 更改name为ID
         if not os.path.exists(path_name):
             raise ValueError("不存在的路径 \"%s\"" % path_name)
         _logger.info("从 \"%s\" 中加载所有的人脸特征值" % path_name)
@@ -350,7 +402,7 @@ class FaceProcess:
             # TODO: name 类型的问题
             # name: str = os.path.basename(filename)
             # name: str = name.split(".")[0]
-            faces_number, features_ = self._load_features_from_image(name, read_image(filename))
+            faces_number, features_ = self._load_features_from_image(ID, read_image(filename))
             total_faces_number += faces_number
             if faces_number == 0:
                 _logger.warning("\n\"%s\" 中没有发现人脸" % filename)
@@ -360,13 +412,13 @@ class FaceProcess:
 
         return features
 
-    def _load_features_from_image(self, name: str, image: np.ndarray) -> Tuple[int, Dict[str, bytes]]:
+    def _load_features_from_image(self, ID: str, image: np.ndarray) -> Tuple[int, Dict[str, bytes]]:
         """
         从图片中加载特征值
         如果 name 为空，名字按数字编号来
         否则，如果只有一个特征，使用 name 的值作为名称
         否则，使用 <name-数字编号> 来命名
-        :param name: 图片中人的名字
+        :param ID: 图片中人的身份id
         :param image: 需要提取特征的图片
         :return: 总的人脸数（包含不清晰无法提取特征值的人脸）, Dict[姓名, 特征值]
         """
@@ -383,12 +435,12 @@ class FaceProcess:
         # 按一定规则生成名字
         def get_name() -> Generator[str, None, None]:
             for i in range(len(features)):
-                if len(name) == 0:
+                if len(ID) == 0:
                     yield "%d" % i
                 if len(features) == 1:
-                    yield name
+                    yield ID
                 else:
-                    yield "%s-%d" % (name, i)
+                    yield "%s-%d" % (ID, i)
 
         # 将所有特征和名字拼接起来
         def assemble() -> Dict[str, bytes]:

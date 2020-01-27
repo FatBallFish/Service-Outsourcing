@@ -5,6 +5,7 @@ from Hotel import settings
 
 from apps.tokens.models import Doki2
 from apps.faces.models import FaceGroup, FaceData
+from apps.realauth.models import RealAuth
 from extral_apps import MD5
 from extral_apps.m_arcface import main as Arcface
 
@@ -268,23 +269,74 @@ class FaceView(View):
                 return JsonResponse(json_dict)
         type = data["type"]
         subtype = data["subtype"]
-        data = data["data"]
+        data = dict(data["data"])
         if type == "face":
             if subtype == "register":
-                for key in ["name", "base64", "faces_group_id"]:
+                if user.real_auth is None:
+                    # todo 以此为模版更改人证核验的api返回值
+                    # todo 增加人员库不存在的情况返回
+                    print("未实名认证")
+                    return JsonResponse({"id": id, "status": 100, "message": "RealAuth not certified", "data": {}})
+                for key in ["base64", "db"]:
                     if key not in data.keys():
                         # status -3 json的value错误。
                         return JsonResponse({"id": id, "status": -3, "message": "Error data key", "data": {}})
-                face_name = data["name"]
+                face_name = user.real_auth.name
+                face_ID = user.real_auth.ID
                 img_base64 = data["base64"]
-
+                db = 1  # 默认人脸库
                 # 获取人员库id并检查
-                faces_group_id = data["faces_group_id"]
+                if "db" in data.keys():
+                    db = data["db"]
                 try:
-                    faces_group = FaceGroup.objects.get(group_id=faces_group_id)
+                    faces_group = FaceGroup.objects.get(id=db)
                 except Exception as e:
+                    # status 100 人员库不存在
                     return JsonResponse({"id": id, "status": 100, "message": "Faces group not exist", "data": {}})
+                base64_head_index = img_base64.find(";base64,")
+                if base64_head_index != -1:
+                    print("进行了替换")
+                    img_base64 = img_base64.partition(";base64,")[2]
+                img_type = "face"
+                img_file = base64.b64decode(img_base64)
+                # todo 更改存储方式，由name转为ID
+                pic_name = MD5.md5(face_ID) + "." + img_type
+                file_name = os.path.join(settings.BASE_DIR, "media", "faces_data", pic_name)
+                with open(file_name, "wb") as f:
+                    f.write(img_file)
+                # 信息初始写入 姓名，特征，注册图片
+                Arcface.addFace(path=file_name, name=face_name, ID=face_ID)
+                # 获取性别，人员库等其他信息
+                face_dict = Arcface.checkFace(file_name)
+                gender = face_dict["gender"]
+                face_content = ""
+                if "content" in data.keys():
+                    face_content = data["content"]
+                try:
+                    face_data = FaceData.objects.get(ID=face_ID)
+                except Exception as e:
+                    print(e)
+                    # status 101 注册人脸数据失败
+                    return JsonResponse({"id": id, "status": 101, "message": "Register face failed", "data": {}})
 
+                face_data.faces_group = faces_group
+                face_data.gender = gender
+                face_data.content = face_content
+                face_data.save()
+                user.face = face_data
+                user.save()
+                json_dict = {"id": id, "status": 0, "message": "successful", "data": {"face_id": face_data.ID}}
+                return JsonResponse(json_dict)
+            elif subtype == "find":
+                for key in ["base64", "db"]:
+                    if key not in data.keys():
+                        # status -3 json的value错误。
+                        return JsonResponse({"id": id, "status": -3, "message": "Error data key", "data": {}})
+                try:
+                    db = int(data["db"])
+                except Exception as e:
+                    db = -1
+                img_base64 = data["base64"]
                 base64_head_index = img_base64.find(";base64,")
                 if base64_head_index != -1:
                     print("进行了替换")
@@ -294,36 +346,50 @@ class FaceView(View):
                 # if "type" in data.keys():
                 #     img_type = data["type"]
                 img_file = base64.b64decode(img_base64)
-                pic_name = MD5.md5(face_name) + "." + img_type
-                file_name = os.path.join(settings.BASE_DIR, "media", "faces_data", pic_name)
+                pic_name = MD5.md5_bytes(img_file) + "." + img_type
+                file_name = os.path.join(settings.BASE_DIR, "media", "tmp", pic_name)
+                # todo 优化本地存储性能
                 with open(file_name, "wb") as f:
                     f.write(img_file)
-                # 信息初始写入 姓名，特征，注册图片
-                Arcface.addFace(path=file_name, name=face_name)
-                # 获取性别，人员库等其他信息
-                face_dict = Arcface.checkFace(file_name)
-                sex = face_dict["gender"]
-                face_content = ""
-                if "content" in data.keys():
-                    face_content = data["content"]
+                # Arcface.reload_features(db=db)
+                json_dict = Arcface.checkFace(file_name, db=db)
+                print(json_dict)
+                if not json_dict:  # 无人脸数据
+                    # status 100 图片中无人脸数据
+                    return JsonResponse({"id": id, "status": 100, "message": "No face data in base64", "data": {}})
+                ret_type = 0
+                if "ret_type" in data.keys():
+                    if isinstance(data["ret_type"], str):
+                        if str(data["ret_type"]).isdecimal():
+                            ret_type = int(data["ret_type"])
+                    elif isinstance(data["ret_type"], int):
+                        ret_type = data["ret_type"]
+                    else:
+                        ret_type = 0
+                ID = json_dict["ID"]
                 try:
-                    face_data = FaceData.objects.get(name=face_name)
+                    face_data = FaceData.objects.get(ID=ID)
+                    name = face_data.name
+                    json_dict["name"] = name
                 except Exception as e:
-                    print(e)
-                    return JsonResponse({"id": id, "status": 101, "message": "Register face failed", "data": {}})
-                face_data.faces_group = faces_group
-                face_data.sex = sex
-                face_data.content = face_content
-                face_data.save()
-                json_dict = {"id": id, "status": 0, "message": "successful", "data": {}}
-                return JsonResponse(json_dict)
-            else:
-                # status -2 json的value错误。
-                return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
-        elif type == "check":
-            if subtype == "facedata":
-                for key in data.keys():
-                    if key not in ["base64", "type"]:
+                    name = ""
+                    json_dict["name"] = name
+                liveness = json_dict["liveness"]
+                threshold = json_dict["threshold"]
+                if ret_type == 0:  # 简略返回，result，liveness，threshold
+                    return JsonResponse({"id": id, "status": 0, "message": "successful",
+                                         "data": {"ID": ID, "name": name, "liveness": liveness,
+                                                  "threshold": threshold}})
+                else:
+                    # status 0 successful
+                    return JsonResponse({"id": id, "status": 0, "message": "successful", "data": json_dict})
+            elif subtype == "verify":
+                print(user.face)
+                if not user.face:
+                    # status 100 人脸未认证 No authentication
+                    return JsonResponse({"id": id, "status": 100, "message": "No face authentication", "data": {}})
+                for key in ["base64"]:
+                    if key not in data.keys():
                         # status -3 json的value错误。
                         return JsonResponse({"id": id, "status": -3, "message": "Error data key", "data": {}})
                 img_base64 = data["base64"]
@@ -338,15 +404,45 @@ class FaceView(View):
                 img_file = base64.b64decode(img_base64)
                 pic_name = MD5.md5_bytes(img_file) + "." + img_type
                 file_name = os.path.join(settings.BASE_DIR, "media", "tmp", pic_name)
+                # todo 优化本地存储性能
                 with open(file_name, "wb") as f:
                     f.write(img_file)
-                json_dict = Arcface.checkFace(file_name)
-                # json_dict = {"id": id, "status": 0, "message": "successful", "data": {}}
-                return JsonResponse(json_dict)
+                # Arcface.reload_features(db=db)
+                json_dict = Arcface.checkFace(file_name, user=user)
+                if not json_dict:
+                    # status 101 图片中无人脸数据
+                    return JsonResponse({"id": id, "status": 101, "message": "No face data in base64", "data": {}})
+                ret_type = 0
+                if "ret_type" in data.keys():
+                    if isinstance(data["ret_type"], str):
+                        if str(data["ret_type"]).isdecimal():
+                            ret_type = int(data["ret_type"])
+                    elif isinstance(data["ret_type"], int):
+                        ret_type = data["ret_type"]
+                    else:
+                        ret_type = 0
+                # todo 数据格式转换（两处）
+                # todo 去除加载数据库时的打印，以及请求到达时的base64打印
+                # todo 完成两个认证api以及绑定api
+                # todo 2020年1月27日00:20:34
+                # {'name': '王凌超', 'age': 27, 'threshold': '0.98', 'gender': 'male', 'liveness': 'true',
+                #  'top_left': (40, 88), 'top_right': (162, 88), 'bottom_left': (40, 210), 'bottom_right': (162, 210)}
+
+                ID = json_dict["ID"]
+                liveness = json_dict["liveness"]
+                threshold = json_dict["threshold"]
+                check_result = True if ID == user.face.ID else False
+                if ret_type == 0:  # 简略返回，result，liveness，threshold
+                    return JsonResponse({"id": id, "status": 0, "message": "successful",
+                                         "data": {"result": check_result, "liveness": liveness,
+                                                  "threshold": threshold}})
+                else:
+                    # status 0 successful
+                    json_dict["result"] = check_result
+                    return JsonResponse({"id": id, "status": 0, "message": "successful", "data": json_dict})
             else:
                 # status -2 json的value错误。
                 return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
-
         else:
             # status -2 json的value错误。
             return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
