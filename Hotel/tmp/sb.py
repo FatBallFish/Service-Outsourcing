@@ -2,6 +2,8 @@ from Hotel import settings
 import requests, json
 from extral_apps import MD5
 
+from datetime import datetime
+import time
 import base64, os
 
 headers = {"content-type": "application/json"}
@@ -210,17 +212,59 @@ token = "46848dd9c36a5592e976e8565f7886ec"  # 13750687010
 # # response = requests.post(url="https://hotel.lcworkroom.cn/api/face/register/", data=json.dumps(data), headers=headers)
 # print(response.text)
 
-# 人脸核验
-with open(os.path.join(settings.BASE_DIR, "media", "tmp", "14.jpg"), "rb") as f:
-    file_data = f.read()
-# print(file_data)
-img_base64 = str(base64.b64encode(file_data), "utf-8")
-print("base64:\n{}".format(img_base64))
+# # 人脸核验
+# with open(os.path.join(settings.BASE_DIR, "media", "tmp", "14.jpg"), "rb") as f:
+#     file_data = f.read()
+# # print(file_data)
+# img_base64 = str(base64.b64encode(file_data), "utf-8")
+# print("base64:\n{}".format(img_base64))
+# data = {"id": 0,
+#         "type": "face",
+#         "subtype": "verify",
+#         "data": {"base64": "{}".format(img_base64), "ret_type": 1}}
+# response = requests.post(url="http://127.0.0.1:8848/api/face/?token={}".format(token), data=json.dumps(data),
+#                          headers=headers)
+# # response = requests.post(url="https://hotel.lcworkroom.cn/api/face/register/", data=json.dumps(data), headers=headers)
+# print(response.text)
+
+# # 实名认证
+# data = {"id": 0,
+#         "type": "realauth",
+#         "subtype": "create",
+#         "data": {
+#             "id_type":"sfz",
+#             "id":"33108219991127089X",
+#             "name":"王凌超",
+#             "gender":"male",
+#             "birthday":time.mktime(time.strptime("2016-07-08","%Y-%m-%d")),
+#             "organization":"临海市公安局"
+#         }}
+# response = requests.post(url="http://127.0.0.1:8848/api/realauth/?token={}".format(token), data=json.dumps(data),
+#                          headers=headers)
+# # response = requests.post(url="https://hotel.lcworkroom.cn/api/face/register/", data=json.dumps(data), headers=headers)
+# print(response.text)
+
+# # 更新实名认证
+# data = {"id": 0,
+#         "type": "realauth",
+#         "subtype": "update",
+#         "data": {
+#             "organization":"临海市公安局"
+#         }
+#     }
+# response = requests.post(url="http://127.0.0.1:8848/api/realauth/?token={}".format(token), data=json.dumps(data),
+#                          headers=headers)
+# # response = requests.post(url="https://hotel.lcworkroom.cn/api/face/register/", data=json.dumps(data), headers=headers)
+# print(response.text)
+
+# 更新实名认证
 data = {"id": 0,
-        "type": "face",
-        "subtype": "verify",
-        "data": {"base64": "{}".format(img_base64), "ret_type": 1}}
-response = requests.post(url="http://127.0.0.1:8848/api/face/?token={}".format(token), data=json.dumps(data),
+        "type": "realauth",
+        "subtype": "get",
+        "data": {}
+        }
+# response = requests.post(url="http://127.0.0.1:8848/api/realauth/?token={}".format(token), data=json.dumps(data),
+#                          headers=headers)
+response = requests.post(url="https://hotel.lcworkroom.cn/api/realauth/?token={}".format(token), data=json.dumps(data),
                          headers=headers)
-# response = requests.post(url="https://hotel.lcworkroom.cn/api/face/register/", data=json.dumps(data), headers=headers)
 print(response.text)

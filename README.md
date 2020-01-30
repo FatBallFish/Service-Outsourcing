@@ -52,7 +52,7 @@ Service outsourcing competition - Hotel visual AI solution
 
 > **URL**
 
-`https://hotel.lcworkroom.cn/api/ping`
+`https://hotel.lcworkroom.cn/api/ping`/
 
 > **GET Response Success**
 
@@ -77,7 +77,66 @@ pong
 + 这个API没有实际用处，仅用于让使用者熟悉此文档中API的请求与返回格式
 + 顺便可以判断能不能API有没有部署成功？
 
+# Token
+
+**用户许可类**
+
+## Token Doki
+
+> **API Description**
+
+`GET`&`POST`
+
+​	此API用于检验`token`是否有效，若有效并刷新`token`有效时间。
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/user/doki/?token=`
+
+> **URL Param**
+
+| Field |  Type  | Length | Null | Default | **Description** |
+| :---: | :----: | :----: | :--: | :-----: | :-------------: |
+| token | string |   32   |      |         |    用户凭证     |
+
+> **Response Success Example**
+
+```python
+{
+    "id": -1, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {}
+}
+```
+
+> **Response Failed Example**
+
+```python
+{
+    "id": -1, 
+    "status": -101, 
+    "message": "Error token", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status | Method     |
+| ------ | ---------- |
+| -101   | GET / POST |
+| -100   | GET / POST |
+
+> **Local Status**
+
+Null
+
 # User
+
+**用户类**
 
 ## User Register
 
@@ -826,6 +885,8 @@ Please refer to [Global Status Table](#Global Status Table)
 
 # Captcha
 
+**验证码类**
+
 ## Image Captcha - Generate
 
 > **API Description**
@@ -838,7 +899,7 @@ Please refer to [Global Status Table](#Global Status Table)
 
 > **URL**
 
-`https://hotel.lcworkroom.cn/api/captcha`
+`https://hotel.lcworkroom.cn/api/captcha/`
 
 > **Request Json Text Example**
 
@@ -910,7 +971,7 @@ Please refer to [Global Status Table](#Global Status Table)
 
 > **URL**
 
-`https://hotel.lcworkroom.cn/api/captcha`
+`https://hotel.lcworkroom.cn/api/captcha/`
 
 > **Request Json Text Example**
 
@@ -986,7 +1047,7 @@ Please refer to [Global Status Table](#Global Status Table)
 
 > **URL**
 
-`https://hotel.lcworkroom.cn/api/captcha`
+`https://hotel.lcworkroom.cn/api/captcha/`
 
 > **Request Json Text Example**
 
@@ -1072,7 +1133,7 @@ Please refer to [Global Status Table](#Global Status Table)
 
 > **URL**
 
-`https://hotel.lcworkroom.cn/api/captcha`
+`https://hotel.lcworkroom.cn/api/captcha/`
 
 > **Request Json Text Example**
 
@@ -1136,19 +1197,21 @@ Please refer to [Global Status Table](#Global Status Table)
 | :----: | :----------------: | :--------------: |
 |  100   | Error captcha hash | 错误的验证码hash |
 
-# Token
+# RealAuth（新增）
 
-## Token Doki
+**实名认证类**
+
+## RealAuth Create
 
 > **API Description**
 
-`GET`&`POST`
+`POST`
 
-​	此API用于检验`token`是否有效，若有效并刷新`token`有效时间。
+此API用于创建一个实名认证信息，成功自动与用户绑定，暂不可解绑，并返回`real_auth_id`
 
 > **URL**
 
-`https://hotel.lcworkroom.cn/api/user/doki/?token=`
+`https://hotel.lcworkroom.cn/api/realauth/?token=`
 
 > **URL Param**
 
@@ -1156,11 +1219,149 @@ Please refer to [Global Status Table](#Global Status Table)
 | :---: | :----: | :----: | :--: | :-----: | :-------------: |
 | token | string |   32   |      |         |    用户凭证     |
 
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"realauth",
+    "subtype":"create",
+    "data":{
+        "id_type":"sfz",
+        "id":"33108219991127089X",
+        "name":"王凌超",
+        "gender":"male",
+        "birthday":1580140800.0,
+    }
+}
+```
+
+> **Data Param**
+
+|    Field     |  Type  | Length | Null | Default |                       **Description**                        |
+| :----------: | :----: | :----: | :--: | :-----: | :----------------------------------------------------------: |
+|   id_type    | string |        |      |         |        身份证件种类，目前只有`sfz`，其他返回`200`错误        |
+|      id      | string |   18   |      |         |                          身份证件号                          |
+|     name     | string |   30   |      |         |                             姓名                             |
+|    gender    | string |   6    |      |         |    年龄，只有`male`和`female`两个选项，其他返回`201`错误     |
+|   birthday   | float  |        |      |         |           生日时间戳，精确到日，时分秒信息将被忽略           |
+|    nation    | string |   10   |  √   |    √    |                             民族                             |
+|   address    | string |  100   |  √   |    √    |                             住址                             |
+| organization | string |   30   |  √   |    √    |                           签发机关                           |
+|  date_start  | float  |        |  √   |    √    | 证件有效期·起始 时间戳，精确到日，时分秒信息将被忽略，失败返回`202`错误 |
+|   date_end   | float  |        |  √   |    √    | 证件有效期·终止 时间戳，精确到日，时分秒信息将被忽略，失败返回`203`错误 |
+
+> **Notice**
+
+- `id`为不可重复字段，若创建的实名认证信息与已有的重复，将返回`100`状态码
+- `id_type`、`id`、`name`、`gender`、`birthday`为必填字段，且不能为空，**且创建后无法修改更新**
+- `nation`、`address`、`organization`、`date_start`、`date_end`为可选字段，且可为空（不过建议不要为空）
+- 各字段的长度限制需由前端校验设置好后再传，否则若有异常会返回`100`状态码
+- 后端不校验`date_start`与`date_end`之间的先后逻辑关系，请前端自行校验
+
 > **Response Success Example**
 
 ```python
 {
-    "id": -1, 
+    "id": 1234, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {
+        "real_auth_id":"3310821999..."
+    }
+}
+```
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": -1, 
+    "message": "Error JSON key", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+| Status |         Message         |   Description    |
+| :----: | :---------------------: | :--------------: |
+|  100   | Create RealAuth failed  | 创建实名认证失败 |
+|  200   | Error id_type |  错误的证件类型  |
+| 201 | Error gender | 错误的性别 |
+| 202 | Error birthday | 错误的出生年月 |
+| 203 | Error date_start | 错误的有效期开始 |
+| 204 | Error date_end | 错误的有效期终止 |
+
+## RealAuth Update
+
+> **API Description**
+
+`POST`
+
+此API用于更新与用户绑定的实名认证信息，若用户未绑定实名认证信息，返回`100`状态码
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/realauth/?token=`
+
+> **URL Param**
+
+| Field |  Type  | Length | Null | Default | **Description** |
+| :---: | :----: | :----: | :--: | :-----: | :-------------: |
+| token | string |   32   |      |         |    用户凭证     |
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"realauth",
+    "subtype":"update",
+    "data":{
+        "nation":"汉",
+        "address":"浙江省临海市...."
+		"organization":"临海市公安局",
+        "date_start":185551654...
+        "date_end":15068956...
+    }
+}
+```
+
+> **Data Param**
+
+|    Field     |  Type  | Length | Null | Default |                       **Description**                        |
+| :----------: | :----: | :----: | :--: | :-----: | :----------------------------------------------------------: |
+|    nation    | string |   10   |  √   |    √    |                             民族                             |
+|   address    | string |  100   |  √   |    √    |                             住址                             |
+| organization | string |   30   |  √   |    √    |                           签发机关                           |
+|  date_start  | float  |        |  √   |    √    | 证件有效期·起始 时间戳，精确到日，时分秒信息将被忽略，失败返回`202`错误 |
+|   date_end   | float  |        |  √   |    √    | 证件有效期·终止 时间戳，精确到日，时分秒信息将被忽略，失败返回`203`错误 |
+
+> **Notice**
+
+- 此API只能更新与用户自身绑定的实名认证信息，若无则返回`100`状态码
+- 此API不能更新`id_type`、`id`、`name`、`gender`、`birthday`等字段
+- `nation`、`address`、`organization`、`date_start`、`date_end`为可选字段，且可为空（不过建议不要为空）
+- 各字段的长度限制需由前端校验设置好后再传，否则若有异常会返回`100`状态码
+- 后端不校验`date_start`与`date_end`之间的先后逻辑关系，请前端自行校验
+
+> **Response Success Example**
+
+```python
+{
+    "id": 1234, 
     "status": 0, 
     "message": "Successful", 
     "data": {}
@@ -1171,9 +1372,9 @@ Please refer to [Global Status Table](#Global Status Table)
 
 ```python
 {
-    "id": -1, 
-    "status": -101, 
-    "message": "Error token", 
+    "id": 1234, 
+    "status": -1, 
+    "message": "Error JSON key", 
     "data": {}
 }
 ```
@@ -1182,18 +1383,108 @@ Please refer to [Global Status Table](#Global Status Table)
 
 Please refer to [Global Status Table](#Global Status Table)
 
-| Status | Method     |
-| ------ | ---------- |
-| -101   | GET / POST |
-| -100   | GET / POST |
+| Status |
+| ------ |
+| -3     |
+| -2     |
+| -1     |
 
 > **Local Status**
 
-Null
+| Status |        Message         |   Description    |
+| :----: | :--------------------: | :--------------: |
+|  100   | RealAuth not certified |    实名未认证    |
+|  200   |     Error date_start/date_end      |  错误的有效期开始/终止  |
 
-# Face
+## RealAuth - Get
 
-**（新增大类 2020年1月28日01:03:06）**
+> **API Description**
+
+`POST`
+
+此API用于获取用户绑定的实名认证信息
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/realauth/?token=`
+
+> **URL Param**
+
+| Field |  Type  | Length | Null | Default | **Description** |
+| :---: | :----: | :----: | :--: | :-----: | :-------------: |
+| token | string |   32   |      |         |    用户凭证     |
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"realauth",
+    "subtype":"get",
+    "data":{}
+}
+```
+
+> **Data Param**
+
+null
+
+> **Notice**
+
+- 此API只能获取与用户自身绑定的实名认证信息，若无则返回`100`状态码
+
+> **Response Success Example**
+
+```python
+{
+    "id": 1234, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {
+        "id_type": "sfz", 
+        "id": "3310821999....", 
+        "name": "王凌超", 
+        "gender": "male", 
+        "nation": "汉", 
+        "birthday": 943632000.0, 
+        "address": "浙江省临海市....", 
+        "organization": "临海市公安局", 
+        "date_start": 1467907200.0, 
+        "date_end": 1783440000.0
+    }
+}
+```
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": -1, 
+    "message": "Error Json key", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+| Status |        Message         | Description |
+| :----: | :--------------------: | :---------: |
+|  100   | RealAuth not certified | 实名未认证  |
+
+# Face（新增）
+
+**人脸数据类**
 
 ## Group - Create
 
@@ -1207,7 +1498,7 @@ Null
 
 > **URL**
 
-`https://hotel.lcworkroom.cn/api/face/group?token=`
+`https://hotel.lcworkroom.cn/api/face/group/?token=`
 
 > **URL Param**
 
@@ -1294,7 +1585,7 @@ Please refer to [Global Status Table](#Global Status Table)
 
 > **URL**
 
-`https://hotel.lcworkroom.cn/api/face/group?token=`
+`https://hotel.lcworkroom.cn/api/face/group/?token=`
 
 > **URL Param**
 
@@ -1383,7 +1674,7 @@ Please refer to [Global Status Table](#Global Status Table)
 
 > **URL**
 
-`https://hotel.lcworkroom.cn/api/face/group?token=`
+`https://hotel.lcworkroom.cn/api/face/group/?token=`
 
 > **URL Param**
 
@@ -1472,7 +1763,7 @@ Please refer to [Global Status Table](#Global Status Table)
 
 > **URL**
 
-`https://hotel.lcworkroom.cn/api/face/group?token=`
+`https://hotel.lcworkroom.cn/api/face/group/?token=`
 
 > **URL Param**
 
@@ -1540,7 +1831,6 @@ Please refer to [Global Status Table](#Global Status Table)
 
 | Status |
 | ------ |
-| -103   |
 | -3     |
 | -2     |
 | -1     |
@@ -1563,7 +1853,7 @@ Please refer to [Global Status Table](#Global Status Table)
 
 > **URL**
 
-`https://hotel.lcworkroom.cn/api/face/group?token=`
+`https://hotel.lcworkroom.cn/api/face/group/?token=`
 
 > **URL Param**
 
