@@ -59,7 +59,7 @@ headers = {"content-type": "application/json"}
 # print(response.text)
 # token = response.json()["data"]["token"]
 
-token = "46848dd9c36a5592e976e8565f7886ec"  # 13750687010
+token = "2b750d4101e3ee20d551758a9cccb519"  # 13750687010
 # token = "f5be3a953ffdfcb1bbe45d4379d05ade"  # 19857160634
 
 
@@ -183,7 +183,7 @@ token = "46848dd9c36a5592e976e8565f7886ec"  # 13750687010
 # print(response.text)
 
 # # 注册用户人脸
-# with open(os.path.join(settings.BASE_DIR, "media", "tmp", "吴雨欣.jpeg"), "rb") as f:
+# with open(os.path.join(settings.BASE_DIR, "media", "tmp", "王凌超.jpg"), "rb") as f:
 #     file_data = f.read()
 # # print(file_data)
 # img_base64 = str(base64.b64encode(file_data), "utf-8")
@@ -198,7 +198,7 @@ token = "46848dd9c36a5592e976e8565f7886ec"  # 13750687010
 # print(response.text)
 
 # # 人脸查找
-# with open(os.path.join(settings.BASE_DIR, "media", "tmp", "back.jpg"), "rb") as f:
+# with open(os.path.join(settings.BASE_DIR, "media", "tmp", "timg.jpg"), "rb") as f:
 #     file_data = f.read()
 # # print(file_data)
 # img_base64 = str(base64.b64encode(file_data), "utf-8")
@@ -206,7 +206,7 @@ token = "46848dd9c36a5592e976e8565f7886ec"  # 13750687010
 # data = {"id": 0,
 #         "type": "face",
 #         "subtype": "find",
-#         "data": {"base64": "{}".format(img_base64), "db": -1,"ret_type":1}}
+#         "data": {"base64": "{}".format(img_base64), "db": -1,"ret_type":0}}
 # response = requests.post(url="http://127.0.0.1:8848/api/face/?token={}".format(token), data=json.dumps(data),
 #                          headers=headers)
 # # response = requests.post(url="https://hotel.lcworkroom.cn/api/face/register/", data=json.dumps(data), headers=headers)
@@ -221,7 +221,7 @@ token = "46848dd9c36a5592e976e8565f7886ec"  # 13750687010
 # data = {"id": 0,
 #         "type": "face",
 #         "subtype": "verify",
-#         "data": {"base64": "{}".format(img_base64), "ret_type": 1}}
+#         "data": {"base64": "{}".format(img_base64), "ret_type": 0}}
 # response = requests.post(url="http://127.0.0.1:8848/api/face/?token={}".format(token), data=json.dumps(data),
 #                          headers=headers)
 # # response = requests.post(url="https://hotel.lcworkroom.cn/api/face/register/", data=json.dumps(data), headers=headers)
@@ -257,14 +257,32 @@ token = "46848dd9c36a5592e976e8565f7886ec"  # 13750687010
 # # response = requests.post(url="https://hotel.lcworkroom.cn/api/face/register/", data=json.dumps(data), headers=headers)
 # print(response.text)
 
-# 更新实名认证
-data = {"id": 0,
-        "type": "realauth",
-        "subtype": "get",
-        "data": {}
-        }
-# response = requests.post(url="http://127.0.0.1:8848/api/realauth/?token={}".format(token), data=json.dumps(data),
+# # 更新实名认证
+# data = {"id": 0,
+#         "type": "realauth",
+#         "subtype": "get",
+#         "data": {}
+#         }
+# # response = requests.post(url="http://127.0.0.1:8848/api/realauth/?token={}".format(token), data=json.dumps(data),
+# #                          headers=headers)
+# response = requests.post(url="https://hotel.lcworkroom.cn/api/realauth/?token={}".format(token), data=json.dumps(data),
 #                          headers=headers)
-response = requests.post(url="https://hotel.lcworkroom.cn/api/realauth/?token={}".format(token), data=json.dumps(data),
-                         headers=headers)
+# print(response.text)
+
+# # 设备注册
+# data = {"id": 0, "type": "device", "subtype": "register",
+#         "data": {"device_name": "测试设备", "device_content": "啦啦啦", "hotel_id": 1}}
+# response = requests.post(url="http://127.0.0.1:8848/api/device/register/", data=json.dumps(data), headers=headers)
+# print(response.text)
+
+# 设备登录
+device_id = "ec26b6f7a55ec7013f7d6c84c2be8724"
+data = {"id": 0, "type": "device", "subtype": "login", "data": {}}
+response = requests.post(url="http://127.0.0.1:8848/api/device/login/?device_id={}".format(device_id),
+                         data=json.dumps(data), headers=headers)
 print(response.text)
+
+# # 获取酒店列表
+# data = {"id": 0, "type": "hotel", "subtype": "list", "data": {}}
+# response = requests.post(url="http://127.0.0.1:8848/api/device/hotel/", data=json.dumps(data), headers=headers)
+# print(response.text)

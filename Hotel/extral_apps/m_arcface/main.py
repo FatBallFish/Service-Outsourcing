@@ -3,6 +3,7 @@ import os, json
 from typing import Dict, Generator
 import platform, sys
 import numpy as np
+import time
 
 from Hotel import settings
 
@@ -23,7 +24,7 @@ def _draw_face_info(image: np.ndarray, face_info: FaceInfo) -> dict:
     """
     # 绘制人脸位置
     rect = face_info.rect
-    print(face_info.gender, type(face_info.gender))
+    # print(face_info.gender, type(face_info.gender))
     json_dict = {
         "ID": face_info.ID,
         "age": face_info.age,
@@ -35,7 +36,7 @@ def _draw_face_info(image: np.ndarray, face_info: FaceInfo) -> dict:
         "bottom_left": rect.bottom_left,
         "bottom_right": rect.bottom_right,
     }
-    print(json_dict)
+    # print(json_dict)
     return json_dict
     # color = (255, 0, 0) if face_info.name else (0, 0, 255)
     # cv.rectangle(image, rect.top_left, rect.bottom_right, color, 2)
@@ -119,13 +120,14 @@ def _run_1_n(image_source: ImageSource, face_process: FaceProcess) -> None:
 
 
 @timer(output=_logger.info)
-def _run_m_n(image_source: ImageSource, face_process: FaceProcess,type:str="name") -> dict:
+def _run_m_n(image_source: ImageSource, face_process: FaceProcess, type: str = "name") -> dict:
     """
     m:n 的整个处理的逻辑
     :image_source: 识别图像的源头
     :face_process: 用来对人脸信息进行提取
     :return: None
     """
+    time1 = time.time()
     with ArcFace(ArcFace.VIDEO_MODE) as arcface:
 
         faces_info: Dict[int, FaceInfo] = {}
@@ -137,44 +139,62 @@ def _run_m_n(image_source: ImageSource, face_process: FaceProcess,type:str="name
         # 获取视频帧
         image = image_source.read()
 
-        # 检测人脸
-        faces_pos: Dict[int, ArcFaceInfo] = {}
-        for face_pos in arcface.detect_faces(image):
-            faces_pos[face_pos.face_id] = face_pos
+        face_list = []  # 统计识别到的人脸数
+        check_num = 0  # 检查次数，暂定为10次
+        while check_num <= 10:
+            # 检测人脸
+            faces_pos: Dict[int, ArcFaceInfo] = {}
+            for face_pos in arcface.detect_faces(image):
+                faces_pos[face_pos.face_id] = face_pos
 
-        # 删除过期 id, 添加新的 id
-        cur_faces_id = faces_pos.keys()
-        last_faces_id = faces_info.keys()
-        for face_id in last_faces_id - cur_faces_id:
-            faces_info[face_id].cancel()  # 如果有操作在进行，这将取消操作
-            faces_info.pop(face_id)
-        for face_id in cur_faces_id:
-            if face_id in faces_info:
-                # 人脸已经存在，只需更新位置就好了
-                faces_info[face_id].arc_face_info = faces_pos[face_id]
-            else:
-                faces_info[face_id] = FaceInfo(faces_pos[face_id])
+            # 删除过期 id, 添加新的 id
+            cur_faces_id = faces_pos.keys()
+            last_faces_id = faces_info.keys()
+            for face_id in last_faces_id - cur_faces_id:
+                faces_info[face_id].cancel()  # 如果有操作在进行，这将取消操作
+                faces_info.pop(face_id)
+            for face_id in cur_faces_id:
+                if face_id in faces_info:
+                    # 人脸已经存在，只需更新位置就好了
+                    faces_info[face_id].arc_face_info = faces_pos[face_id]
+                else:
+                    faces_info[face_id] = FaceInfo(faces_pos[face_id])
 
-        # 更新人脸的信息
-        # for face_info in faces_info:
-        #     face_process.async_update_face_info(image, face_info)
-        opt_face_info = None
-        for face_info in filter(lambda x: x.need_update(), faces_info.values()):
-            if opt_face_info is None or opt_face_info.rect.size < face_info.rect.size:
-                opt_face_info = face_info
+            # 更新人脸的信息
+            # for face_info in faces_info:
+            #     face_process.async_update_face_info(image, face_info)
+            opt_face_info = None
+            for face_info in filter(lambda x: x.need_update(), faces_info.values()):
+                if opt_face_info is None or opt_face_info.rect.size < face_info.rect.size:
+                    opt_face_info = face_info
 
-        if opt_face_info is not None:
-            face_process.async_update_face_info(image, opt_face_info)
+            if opt_face_info is not None:
+                face_process.async_update_face_info(image, opt_face_info)
 
-            # cv.imshow("temp", opt_face_info.image)
-            # print(opt_face_info.image.shape)
-        # time.sleep(1)
-        # 绘制人脸信息
-        for face_info in faces_info.values():
-            while not face_info.updated_flags[0] or not face_info.updated_flags[1]:
-                continue
-            json_dict = _draw_face_info(image, face_info)
-            return json_dict
+                # cv.imshow("temp", opt_face_info.image)
+                # print(opt_face_info.image.shape)
+            # time.sleep(1)
+            # 绘制人脸信息
+            # flag = False
+            num = len(faces_info)  # 人脸数，可能会变
+            for face_info in faces_info.values():
+                while face_info._busy():
+                    continue
+                if face_list.count(face_info) == 0:
+                    face_list.append(face_info)
+                if len(face_list) == num:
+                    pass
+                # json_dict = _draw_face_info(image, face_info)
+                # return json_dict
+            check_num += 1
+        time2 = time.time()
+        _logger.debug("人脸检索用时：", time2 - time1)
+        data_list = []
+        for face in face_list:
+            list_json = _draw_face_info(image, face)
+            data_list.append(list_json)
+        data_json = {"num": len(data_list), "list": data_list}
+        return data_json
 
 
 @timer(output=_logger.info)
@@ -184,8 +204,8 @@ def addFace(path: str, name: str, ID: str):
 
 
 @timer(output=_logger.info)
-def checkFace(path: str,db:int=-1,user=None) -> dict:
-    reload_features(db=db,user=user)
+def checkFace(path: str, db: int = -1, user=None) -> dict:
+    reload_features(db=db, user=user)
     image_source = LocalImage(path=path)
     json_dict = {}
     # run = _run_m_n
@@ -195,8 +215,8 @@ def checkFace(path: str,db:int=-1,user=None) -> dict:
 
 
 @timer(output=_logger.info)
-def reload_features(db: int = -1,user=None):
-    face_process.reload_features(db=db,user=user)
+def reload_features(db: int = -1, user=None):
+    face_process.reload_features(db=db, user=user)
 
 
 @timer(output=_logger.info)

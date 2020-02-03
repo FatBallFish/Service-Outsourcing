@@ -304,10 +304,35 @@ class FaceView(View):
                 file_name = os.path.join(settings.BASE_DIR, "media", "faces_data", pic_name)
                 with open(file_name, "wb") as f:
                     f.write(img_file)
+                # 先检查人脸数，如果不等于1，返回错误状态码
+                face_dict = Arcface.checkFace(file_name)
+                num = face_dict["num"]
+                if num == 0:
+                    # 注册的图片无人脸
+                    # status 102 图片中无人脸数据
+                    return JsonResponse({"id": id, "status": 102, "message": "No face data in base64", "data": {}})
+                    # todo 完善无脸或两张脸以上的情况！
+                elif num > 1:
+                    # status 103 图片中人脸数据过多
+                    return JsonResponse(
+                        {"id": id, "status": 103, "message": "Too much face data in base64", "data": {}})
                 # 信息初始写入 姓名，特征，注册图片
                 Arcface.addFace(path=file_name, name=face_name, ID=face_ID)
                 # 获取性别，人员库等其他信息
                 face_dict = Arcface.checkFace(file_name)
+                num = face_dict["num"]
+                data_list = face_dict["list"]
+                if num == 1:
+                    face_dict = data_list[0]
+                elif num == 0:
+                    # 注册的图片无人脸
+                    # status 102 图片中无人脸数据
+                    return JsonResponse({"id": id, "status": 102, "message": "No face data in base64", "data": {}})
+                    # todo 完善无脸或两张脸以上的情况！
+                else:
+                    # status 103 图片中人脸数据过多
+                    return JsonResponse(
+                        {"id": id, "status": 103, "message": "Too much face data in base64", "data": {}})
                 gender = face_dict["gender"]
                 face_content = ""
                 if "content" in data.keys():
@@ -318,7 +343,6 @@ class FaceView(View):
                     print(e)
                     # status 101 注册人脸数据失败
                     return JsonResponse({"id": id, "status": 101, "message": "Register face failed", "data": {}})
-
                 face_data.faces_group = faces_group
                 face_data.gender = gender
                 face_data.content = face_content
@@ -354,7 +378,10 @@ class FaceView(View):
                 # Arcface.reload_features(db=db)
                 json_dict = Arcface.checkFace(file_name, db=db)
                 print(json_dict)
-                if not json_dict:  # 无人脸数据
+                num = json_dict["num"]
+                data_list = json_dict["list"]
+                if num == 0:  # 无人脸数据
+                    # if not json_dict:  # 无人脸数据
                     # status 100 图片中无人脸数据
                     return JsonResponse({"id": id, "status": 100, "message": "No face data in base64", "data": {}})
                 ret_type = 0
@@ -366,20 +393,23 @@ class FaceView(View):
                         ret_type = data["ret_type"]
                     else:
                         ret_type = 0
-                ID = json_dict["ID"]
-                try:
-                    face_data = FaceData.objects.get(ID=ID)
-                    name = face_data.name
-                    json_dict["name"] = name
-                except Exception as e:
-                    name = ""
-                    json_dict["name"] = name
-                liveness = json_dict["liveness"]
-                threshold = json_dict["threshold"]
+                sample_list = []
+                for face_dict in data_list:
+                    ID = face_dict["ID"]
+                    try:
+                        face_data = FaceData.objects.get(ID=ID)
+                        name = face_data.name
+                        face_dict["name"] = name
+                    except Exception as e:
+                        name = ""
+                        face_dict["name"] = name
+                    liveness = face_dict["liveness"]
+                    threshold = face_dict["threshold"]
+                    sample_dict = {"ID": ID, "name": name, "liveness": liveness, "threshold": threshold}
+                    sample_list.append(sample_dict)
                 if ret_type == 0:  # 简略返回，result，liveness，threshold
                     return JsonResponse({"id": id, "status": 0, "message": "successful",
-                                         "data": {"ID": ID, "name": name, "liveness": liveness,
-                                                  "threshold": threshold}})
+                                         "data": {"num": len(sample_list), "list": sample_list}})
                 else:
                     # status 0 successful
                     return JsonResponse({"id": id, "status": 0, "message": "successful", "data": json_dict})
@@ -409,9 +439,16 @@ class FaceView(View):
                     f.write(img_file)
                 # Arcface.reload_features(db=db)
                 json_dict = Arcface.checkFace(file_name, user=user)
-                if not json_dict:
+                num = json_dict["num"]
+                data_list = json_dict["list"]
+                if num == 0:
+                    # if not json_dict:
                     # status 101 图片中无人脸数据
                     return JsonResponse({"id": id, "status": 101, "message": "No face data in base64", "data": {}})
+                elif num != 1:
+                    # status 102 图片中人脸数据过多
+                    return JsonResponse(
+                        {"id": id, "status": 102, "message": "Too much face data in base64", "data": {}})
                 ret_type = 0
                 if "ret_type" in data.keys():
                     if isinstance(data["ret_type"], str):
@@ -425,21 +462,23 @@ class FaceView(View):
                 # todo 去除加载数据库时的打印，以及请求到达时的base64打印
                 # todo 完成两个认证api以及绑定api
                 # todo 2020年1月27日00:20:34
-                # {'name': '王凌超', 'age': 27, 'threshold': '0.98', 'gender': 'male', 'liveness': 'true',
-                #  'top_left': (40, 88), 'top_right': (162, 88), 'bottom_left': (40, 210), 'bottom_right': (162, 210)}
-
-                ID = json_dict["ID"]
-                liveness = json_dict["liveness"]
-                threshold = json_dict["threshold"]
+                # {'num': 1, 'list': [
+                #     {'ID': '331082199911270890', 'age': 21, 'threshold': 1.0, 'gender': 'female', 'liveness': True,
+                #      'top_left': (399, 413), 'top_right': (658, 413), 'bottom_left': (399, 672),
+                #      'bottom_right': (658, 672)}]}
+                face_dict = data_list[0]
+                ID = face_dict["ID"]
+                liveness = face_dict["liveness"]
+                threshold = face_dict["threshold"]
                 check_result = True if ID == user.face.ID else False
+                sample_dict = {"result": check_result, "ID": ID, "liveness": liveness, "threshold": threshold}
                 if ret_type == 0:  # 简略返回，result，liveness，threshold
                     return JsonResponse({"id": id, "status": 0, "message": "successful",
-                                         "data": {"result": check_result, "liveness": liveness,
-                                                  "threshold": threshold}})
+                                         "data": sample_dict})
                 else:
+                    face_dict["result"] = check_result
                     # status 0 successful
-                    json_dict["result"] = check_result
-                    return JsonResponse({"id": id, "status": 0, "message": "successful", "data": json_dict})
+                    return JsonResponse({"id": id, "status": 0, "message": "successful", "data": face_dict})
             else:
                 # status -2 json的value错误。
                 return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
@@ -447,5 +486,6 @@ class FaceView(View):
             # status -2 json的value错误。
             return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
 
-    def get(self, request, *args, **kwargs):
-        pass
+
+def get(self, request, *args, **kwargs):
+    pass

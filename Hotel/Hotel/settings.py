@@ -24,7 +24,7 @@ SECRET_KEY = 't8orzbrmu_&p0y8wru4_4*v+zpdt4h0h&j9c+9@61p6j^0eujy'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["hotel.lcworkroom.cn", "lcworkroom.cn", "zustjinzhu.com", "127.0.0.1", "localhost"]
+ALLOWED_HOSTS = ["hotel.lcworkroom.cn", "lcworkroom.cn", "zustjinzhu.com", "127.0.0.1", "localhost", "192.168.1.104"]
 
 # Application definition
 
@@ -133,6 +133,12 @@ SIMPLEUI_DEFAULT_THEME = 'admin.lte.css'
 # SIMPLEUI_HOME_TITLE = '酒店视觉AI解决方案-后台管理'
 SIMPLEUI_HOME_INFO = False  # 服务器信息,右侧simple ui主页
 SIMPLEUI_ANALYSIS = False
+
+# HP-socket
+HP_SOCKET_IP = "118.25.98.76"
+HP_SOCKET_PORT = 9527
+HP_SOCKET_FLAG = 1023
+HP_SOCKET_MAXSIZE = 102400
 
 AUTH_PASSWORD_VALIDATORS = [
     {

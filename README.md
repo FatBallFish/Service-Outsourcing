@@ -1197,7 +1197,7 @@ Please refer to [Global Status Table](#Global Status Table)
 | :----: | :----------------: | :--------------: |
 |  100   | Error captcha hash | 错误的验证码hash |
 
-# RealAuth（新增）
+# RealAuth
 
 **实名认证类**
 
@@ -1482,7 +1482,7 @@ Please refer to [Global Status Table](#Global Status Table)
 | :----: | :--------------------: | :---------: |
 |  100   | RealAuth not certified | 实名未认证  |
 
-# Face（新增）
+# Face
 
 **人脸数据类**
 
@@ -1926,7 +1926,7 @@ Please refer to [Global Status Table](#Global Status Table)
 
 null
 
-## Face - Register
+## Face - Register（重要更新）
 
 > **API Description**
 
@@ -1934,9 +1934,15 @@ null
 
 此API用于以`base64`为人脸数据注册用户的人脸信息，成功返回`face_id(身份证号)`
 
-**确保人脸图像中只有一张人脸数据，未测试过两张人脸数据的情况**
-
 **调用此API前需保证用户已进行实名认证，否则将返回`100`状态码**
+
+
+
+**修改**
+
+2020年2月2日00:03:20
+
+新增注册时人脸个数判断，详情看api的局部返回值
 
 > **URL**
 
@@ -1974,8 +1980,8 @@ null
 > **Notice**
 
 - 用户若未进行过**实名认证**，则返回`100`状态码
-- 用户可重复调用此API对人脸数据进行覆盖注册。
-- **确保人脸图像中只有一张人脸数据，未测试过两张人脸数据的情况**
+- 用户可重复调用此API对人脸数据进行覆盖注册，若图片中无人脸数据或人脸数据过多将返回下面状态码，原人脸数据不受影响。
+- **确保人脸图像中只有一张人脸数据，无人脸返回`102`状态码，大于1张人脸返回`103`状态码**
 - `db`为人员库id，可缺省，若有不可为`null`，默认为`1`(默认人员库)，详情人员库信息可通过[获取人员库列表API](#Group - List)获取
 - `content`为人员描述信息，可缺省，若有不可为`null`，默认为空文本
 - 若两个参数都没传过来，返回`101`状态码
@@ -2017,12 +2023,14 @@ Please refer to [Global Status Table](#Global Status Table)
 
 > **Local Status**
 
-| Status |        Message        |   Description    |
-| :----: | :-------------------: | :--------------: |
-|  100   | Faces group not exist |   人员库不存在   |
-|  101   | Register face failed  | 注册人员数据失败 |
+| Status |           Message            |    Description     |
+| :----: | :--------------------------: | :----------------: |
+|  100   |    Faces group not exist     |    人员库不存在    |
+|  101   |     Register face failed     |  注册人员数据失败  |
+|  102   |    No face data in base64    |  图片中无人脸数据  |
+|  103   | Too much face data in base64 | 图片中人脸数据过多 |
 
-## Face - Find
+## Face - Find（重要更新）
 
 > **API Description**
 
@@ -2030,9 +2038,17 @@ Please refer to [Global Status Table](#Global Status Table)
 
 此API用于以`base64`为人脸数据查找指定人员库中的的人脸信息，成功返回人脸相关信息
 
-**确保人脸图像中只有一张人脸数据，未测试过两张人脸数据的情况**
-
 **此API慎用，因为会返回用户的隐私信息**
+
+
+
+**修改**
+
+2020年2月2日00:05:55
+
+新增人脸数的判断，修复只能识别一张人脸的情况
+
+更新返回的json文本格式
 
 > **URL**
 
@@ -2069,7 +2085,7 @@ Please refer to [Global Status Table](#Global Status Table)
 
 > **Notice**
 
-- **确保人脸图像中只有一张人脸数据，出现两张人脸数据会宕机，没有人脸将返回`100`错误**
+- **没有人脸将返回`100`错误**
 - `db`为人员库id，可缺省，若有不可为`null`，默认为`-1`(所有人员库)，详情人员库信息可通过[获取人员库列表API](#Group - List)获取
 - `ret_type`为数据返回模式，`0`为精简返回，`1`为完全返回。**后期打算将`1 全部返回`限制为仅管理员可用，目前无限制**
 
@@ -2094,14 +2110,31 @@ Please refer to [Global Status Table](#Global Status Table)
 
 ```python
 {
-    "ID": "3310821999...", 
-    "name": "王凌超", 
-    "liveness": true,
-    "threshold": 0.98
+    "num": 2, 
+    "list": [
+        {
+            "ID": "",
+            "name": "", 
+            "liveness": false, 
+            "threshold": 0.0
+        }, 
+        {
+            "ID": "", 
+            "name": "", 
+            "liveness": true, 
+            "threshold": 0.0
+        }
+    ]
 }
 ```
 
+> **Notice**
 
++ 在简要返回中，若图片中的人脸数据有部分识别失败时，并不能准确判断。但在完全返回中可以进行判断
++ 若人脸数据有部分识别失败，`ID`为"",`name`为“”，`liveness`为false`threshold`为0.0
++ 识别失败与匹配失败不同，但在简单返回中返回值类似，唯一区别在于`liveness`，但若识别的为照片中人物且识别失败，两者返回值将无法分辨。
++ 识别失败属于程序算法中问题，暂无更优解，匹配失败是指人脸数据不在人员库中
++ 上面例子中，第一组数据为识别失败，第二组数据为匹配失败
 
 > **Response Data Param**
 >
@@ -2130,18 +2163,42 @@ Please refer to [Global Status Table](#Global Status Table)
 
 ```python
 {
-    'ID': '33108219991127089X', 
-    "name": "王凌超",
-    'age': 27, 
-    'threshold': 0.98, 
-    'gender': 'male', 
-    'liveness': True, 
-    'top_left': (40, 88), 
-    'top_right': (162, 88), 
-    'bottom_left': (40, 210), 
-    'bottom_right': (162, 210)
+    "num": 2, 
+    "list": [
+        {
+            "ID": "", 
+            "age": null, 
+            "threshold": 0.0, 
+            "gender": "", 
+            "liveness": false, 
+            "top_left": [61, 94], 
+            "top_right": [157, 94], 
+            "bottom_left": [61, 189], 
+            "bottom_right": [157, 189], 
+            "name": ""
+        }, 
+        {
+            "ID": "", 
+            "age": 26, 
+            "threshold": 0.0,
+            "gender": "male", 
+            "liveness": true, 
+            "top_left": [209, 60], 
+            "top_right": [308, 60], 
+            "bottom_left": [209, 159], 
+            "bottom_right": [308, 159], 
+            "name": ""
+        }
+    ]
 }
 ```
+
+> **Notice**
+
++ 在完全返回中，若图片中的人脸数据有部分识别失败时，`age`字段将返回null值，但人脸矩阵依旧有数据
++ 若人脸数据有部分识别失败，`ID`为`""`，`age`为`null`，`gender`为`""`，`name`为`""`，`liveness`为`false`，`threshold`为`0.0`
++ 识别失败与匹配失败不同，识别失败属于程序算法中问题，暂无更优解，匹配失败是指人脸数据不在人员库中
++ 上面例子中，第一组数据为识别失败，第二组数据为匹配失败
 
 > **Response Success Example**
 
@@ -2183,7 +2240,7 @@ Please refer to [Global Status Table](#Global Status Table)
 | :----: | :--------------------: | :--------------: |
 |  100   | No face data in base64 | 图片中无人脸信息 |
 
-## Face - Verify
+## Face - Verify（重要更新）
 
 > **API Description**
 
@@ -2191,7 +2248,15 @@ Please refer to [Global Status Table](#Global Status Table)
 
 此API用于以`base64`为人脸数据核验是否与用户人脸认证信息匹配，成功返回相关信息
 
-**确保人脸图像中只有一张人脸数据，出现两张人脸数据会宕机，没有人脸将返回`101`错误**
+**没有人脸将返回`101`错误**
+
+
+
+**修改**
+
+2020年2月2日00:22:20
+
+新增多张人脸时返回`102`状态码
 
 > **URL**
 
@@ -2227,7 +2292,7 @@ Please refer to [Global Status Table](#Global Status Table)
 > **Notice**
 
 - 若用户未进行过人脸认证，返回`100`状态码。
-- **确保人脸图像中只有一张人脸数据，出现两张人脸数据会宕机，没有人脸将返回`101`错误**
+- **没有人脸将返回`101`错误，多张人脸返回`102`错误**
 - `ret_type`为数据返回模式，`0`为精简返回，`1`为完全返回。**后期打算将`1 全部返回`限制为仅管理员可用，目前无限制**
 
 > **Response Data Param**
@@ -2298,6 +2363,12 @@ Please refer to [Global Status Table](#Global Status Table)
 }
 ```
 
+> **Notice**
+
++ 在完全返回中，若图片中的人脸数据有部分识别失败时，`age`字段将返回null值，但人脸矩阵依旧有数据
++ 若人脸数据有部分识别失败，`ID`为`""`，`age`为`null`，`gender`为`""`，`name`为`""`，`liveness`为`false`，`threshold`为`0.0`
++ 识别失败与匹配失败不同，识别失败属于程序算法中问题，暂无更优解，匹配失败是指人脸数据不在人员库中
+
 > **Response Success Example**
 
 ```python
@@ -2334,12 +2405,15 @@ Please refer to [Global Status Table](#Global Status Table)
 
 > **Local Status**
 
-| Status |        Message         |   Description    |
-| :----: | :--------------------: | :--------------: |
-|  100   | No face authentication |  人脸信息未认证  |
-|  101   | No face data in base64 | 图片中无人脸信息 |
+| Status |           Message            |    Description     |
+| :----: | :--------------------------: | :----------------: |
+|  100   |    No face authentication    |   人脸信息未认证   |
+|  101   |    No face data in base64    |  图片中无人脸信息  |
+|  102   | Too much face data in base64 | 图片中人脸数据过多 |
 
+# 硬件终端接口暂不写说明文档
 
+**因为随时有可能会调整**
 
 # Global Status Table
 

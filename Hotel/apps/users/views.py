@@ -14,6 +14,7 @@ from extral_apps.m_img import py_captcha_main as ImgCaptcha
 from extral_apps.m_sms import py_sms_main as SmsCaptcha
 from extral_apps.m_cos import py_cos_main as COS
 from extral_apps.m_arcface import main as Arcface
+from extral_apps.m_hpsocket import main as HPSocket
 
 from datetime import datetime, timedelta
 import json, base64, random
@@ -25,6 +26,7 @@ Redis.Initialize(settings.BASE_DIR)
 ImgCaptcha.Initialize(settings.BASE_DIR)
 SmsCaptcha.Initialize(settings.BASE_DIR)
 Arcface.Initialize(False)
+HPSocket.Initialize(settings.BASE_DIR)
 
 
 def createToken(username: str, time_int: float) -> str:

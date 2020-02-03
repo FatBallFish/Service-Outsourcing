@@ -24,6 +24,7 @@ from apps.tokens.views import TokenDokiView, PingView
 from apps.faces.views import FaceView, FaceGroupView
 from apps.users.views import UserLoginView, UserRegisterView, UserInfoView, CaptchaView, PasswordView, PortraitView
 from apps.realauth.views import RealAuthView
+from apps.devices.views import DeviceLoginView, DeviceRegisterView, DeviceHotelListView
 import os
 
 API_ROOT = settings.API_ROOT
@@ -42,5 +43,7 @@ urlpatterns = [
     path(API_ROOT + "face/group/", csrf_exempt(FaceGroupView.as_view()), name="face_group"),
     path(API_ROOT + "face/", csrf_exempt(FaceView.as_view()), name="face_register"),
     path(API_ROOT + "realauth/", csrf_exempt(RealAuthView.as_view()), name="real_auth"),
-
+    path(API_ROOT + "device/login/", csrf_exempt(DeviceLoginView.as_view()), name="device_login"),
+    path(API_ROOT + "device/register/", csrf_exempt(DeviceRegisterView.as_view()), name="device_register"),
+    path(API_ROOT + "device/hotel/", csrf_exempt(DeviceHotelListView.as_view()), name="device_hotel_list"),
 ]

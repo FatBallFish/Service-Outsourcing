@@ -1,13 +1,8 @@
-import time
-import sys
-from datetime import datetime
-str = time.mktime(datetime.now().date().timetuple())
-print(str)
-try:
-    timestamp = float(str)
-except Exception as e:
-    print("is not float")
-    sys.exit()
-date = time.strftime("%Y-%m-%d", time.localtime(timestamp))
-date = datetime.strptime(date, "%Y-%m-%d").date()
-print(date)
+conn_pool = {1: "123", 2: "456"}
+print(conn_pool)
+device_id = conn_pool.get(3)
+print(device_id)
+conn_pool.pop(1)
+print(conn_pool)
+conn_pool.setdefault(4, "")
+print(conn_pool)

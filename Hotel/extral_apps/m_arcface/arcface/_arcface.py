@@ -239,7 +239,7 @@ class ArcFace:
             ArcFace._bytes_to_sdk_feature(fea2),
             compare_threshold
         )
-        print("ret:{}".format(ret))
+        # print("ret:{}".format(ret))
         if ret != 0:
             raise ArcFace._get_exception("CompareFeature", "对比人脸特征失败", ret)
 
