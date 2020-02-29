@@ -21,7 +21,7 @@ class BaseModel(models.Model):
 class Users(AbstractUser):
     nickname = models.CharField(verbose_name="昵称", max_length=20, blank=True, null=True)
     phone = models.CharField(verbose_name="手机号", max_length=11, unique=True)
-    image = models.ImageField(verbose_name="用户头像", upload_to='users', default="users/default.jpg")
+    # image = models.ImageField(verbose_name="用户头像", upload_to='users', default="users/default.jpg")
     real_auth = models.ForeignKey(verbose_name="实名认证", to=RealAuth, on_delete=models.SET_NULL, blank=True, null=True)
     face = models.ForeignKey(verbose_name="人脸数据", to=FaceData, on_delete=models.SET_NULL, blank=True, null=True)
 
@@ -52,7 +52,11 @@ class Users(AbstractUser):
     auth_name.short_description = "姓名"
 
     def auth_gender(self):
-        return format_html(self.info_html, self.real_auth.gender)
+        if self.real_auth.gender == 'male':
+            gender = "男"
+        else:
+            gender = "女"
+        return format_html(self.info_html, gender)
 
     auth_gender.short_description = "性别"
 

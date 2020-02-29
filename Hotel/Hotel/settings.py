@@ -42,8 +42,11 @@ INSTALLED_APPS = [
     "apps.devices.apps.DevicesConfig",
     "apps.rooms.apps.RoomsConfig",
     "apps.guests.apps.GuestsConfig",
+    "apps.pics.apps.PicsConfig",
     "apps.customerserver.apps.CustomerserverConfig",
     "apps.realauth.apps.RealauthConfig",
+    "apps.msg.apps.MsgConfig",
+
 ]
 
 MIDDLEWARE = [
@@ -140,6 +143,8 @@ HP_SOCKET_PORT = 9527
 HP_SOCKET_FLAG = 1023
 HP_SOCKET_MAXSIZE = 102400
 
+# MAP
+MAP_KEY = "d168a0f41ef102f0b8cd8a17dc83114d"
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',

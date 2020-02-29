@@ -1,8 +1,6 @@
-conn_pool = {1: "123", 2: "456"}
-print(conn_pool)
-device_id = conn_pool.get(3)
-print(device_id)
-conn_pool.pop(1)
-print(conn_pool)
-conn_pool.setdefault(4, "")
-print(conn_pool)
+import time
+from datetime import datetime
+print(datetime.now())
+print(time.time())
+print(1581952914164)
+print(time.mktime(time.strptime("2016-07-08", "%Y-%m-%d")))

@@ -32,12 +32,12 @@ class UsersAdmin(admin.ModelAdmin):
     list_per_page = 10  # 列表每页最大显示数量，默认100
 
     def read_img_big(self, users):
-        return format_html('<img src="/media/{}" style="width:100px;height:auto">', users.image)
+        return format_html('<img src="/api/pic/get/users?name={}" style="width:100px;height:auto">', users.username)
 
     read_img_big.short_description = "用户头像"  # 显示在列表表头的描述
 
     def read_img_small(self, users):
-        return format_html('<img src="/media/{}" style="width:32px;height:auto">', users.image)
+        return format_html('<img src="/api/pic/get/users?name={}" style="width:32px;height:auto">', users.username)
 
     read_img_small.short_description = "用户头像"
 

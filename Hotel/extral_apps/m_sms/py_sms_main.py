@@ -133,8 +133,8 @@ def SendCaptchaCode(phone_number:str, captcha:str,command_str:str="注册账号"
     return result
 
 if __name__ == "__main__":
-    Initialize("../config.ini","../")
-    result = SendFallMessage(phone_number="13588788439",name="潘华铮先生")
+    Initialize("../config.ini")
+    result = SendCaptchaCode(phone_number="13750687010",captcha="https://dwz.cn/JOz0ThM4")
     print(result)
     # print(imgcode.code_str,imgcode.webpath)
 

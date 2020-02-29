@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.views.generic.base import View
 from django.http import JsonResponse, HttpResponse
+from django.http import HttpResponseRedirect
 from django.contrib.auth import authenticate
 from Hotel import settings
 
@@ -8,6 +9,7 @@ from apps.users.models import Users
 from apps.tokens.models import Tokens, Doki2
 from apps.faces.models import FaceData
 from apps.realauth.models import RealAuth
+from apps.pics.models import PicBed
 from extral_apps import MD5
 from extral_apps.m_redis import py_redis as Redis
 from extral_apps.m_img import py_captcha_main as ImgCaptcha
@@ -408,8 +410,11 @@ class UserInfoView(View):
         real_auth_ID = None
         if user.real_auth:
             real_auth_ID = user.real_auth.ID
+        if_face = False
+        if user.face:
+            if_face = True
         data_dict = {"id": user.id, "username": user.username, "nickname": user.nickname, "email": user.email,
-                     "phone": user.phone, "ID": real_auth_ID}
+                     "phone": user.phone, "ID": real_auth_ID, "if_face": if_face}
         print(data_dict)
         return JsonResponse({"id": -1, "status": 0, "message": "Successful", "data": data_dict})
 
@@ -490,19 +495,29 @@ class UserInfoView(View):
                     elif key == "phone":
                         continue
                     elif key == "face_id":
-                        face_id = data[key]
-                        try:
-                            face = FaceData.objects.get(ID=face_id)
-                            user.face = face
-                        except Exception as e:
-                            return JsonResponse({"id": id, "status": 103, "message": "No Such Face", "data": {}})
+                        if data[key] is None or data[key] == "":
+                            user.face = None
+                        else:
+                            face_id = data[key]
+                            try:
+                                face = FaceData.objects.get(ID=face_id)
+                                user.face = face
+                            except Exception as e:
+                                return JsonResponse({"id": id, "status": 103, "message": "No Such Face", "data": {}})
                     elif key == "real_auth_id":
-                        real_auth_ID = int(data[key])
-                        try:
-                            real_auth = RealAuth.objects.get(ID=real_auth_ID)
-                            user.real_auth = real_auth
-                        except Exception as e:
-                            return JsonResponse({"id": id, "status": 104, "message": "No Such RealAuth", "data": {}})
+                        if data[key] is None or data[key] == "":
+                            user.real_auth = None
+                        else:
+                            real_auth_ID = str(data[key])
+                            try:
+                                real_auth = RealAuth.objects.get(ID=real_auth_ID)
+                                user.real_auth = real_auth
+                            except Exception as e:
+                                return JsonResponse(
+                                    {"id": id, "status": 104, "message": "No Such RealAuth", "data": {}})
+                # 额外的判断与处理
+                if user.real_auth is None:
+                    user.face = None
                 try:
                     user.save()
                 except Exception as e:
@@ -623,32 +638,37 @@ class PortraitView(View):
             username = request.GET.get("username")
             print("username:", username)
             if not username:
-                with open(os.path.join(settings.MEDIA_ROOT, "users", "error.jpg"), "rb") as f:
-                    img_data = f.read()
-                return HttpResponse(img_data, content_type="image/jpg")
+                return HttpResponseRedirect("/media/users/error.jpg")
+                # with open(os.path.join(settings.MEDIA_ROOT, "users", "error.jpg"), "rb") as f:
+                #     img_data = f.read()
+                # return HttpResponse(img_data, content_type="image/jpg")
         except Exception as e:
             print(e)
             print("Missing necessary args")
             # log_main.error("Missing necessary agrs")
             # status -100 缺少必要的参数
-            with open(os.path.join(settings.MEDIA_ROOT, "users", "error.jpg"), "rb") as f:
-                img_data = f.read()
-            return HttpResponse(img_data, content_type="image/jpg")
+            return HttpResponseRedirect("/media/users/error.jpg")
+            # with open(os.path.join(settings.MEDIA_ROOT, "users", "error.jpg"), "rb") as f:
+            #     img_data = f.read()
+            # return HttpResponse(img_data, content_type="image/jpg")
+
         try:
             Users.objects.get(username=username)
-            file_name = MD5.md5(username) + ".user"
-            try:
-                with open(os.path.join(settings.MEDIA_ROOT, "users", file_name), "rb") as f:
-                    img_data = f.read()
-                return HttpResponse(img_data, content_type="image/jpg")
-            except Exception as e:
-                with open(os.path.join(settings.MEDIA_ROOT, "users", "default.jpg"), "rb") as f:
-                    img_data = f.read()
-                return HttpResponse(img_data, content_type="image/jpg")
+            return HttpResponseRedirect("/api/pic/get/users/?name={}".format(username))
+            # file_name = MD5.md5(username) + ".user"
+            # try:
+            #     with open(os.path.join(settings.MEDIA_ROOT, "users", file_name), "rb") as f:
+            #         img_data = f.read()
+            #     return HttpResponse(img_data, content_type="image/jpg")
+            # except Exception as e:
+            #     with open(os.path.join(settings.MEDIA_ROOT, "users", "default.jpg"), "rb") as f:
+            #         img_data = f.read()
+            #     return HttpResponse(img_data, content_type="image/jpg")
         except Exception as e:
-            with open(os.path.join(settings.MEDIA_ROOT, "users", "error.jpg"), "rb") as f:
-                img_data = f.read()
-            return HttpResponse(img_data, content_type="image/jpg")
+            return HttpResponseRedirect("/media/users/error.jpg")
+            # with open(os.path.join(settings.MEDIA_ROOT, "users", "error.jpg"), "rb") as f:
+            #     img_data = f.read()
+            # return HttpResponse(img_data, content_type="image/jpg")
 
     def post(self, request, *args, **kwargs):
         try:
@@ -695,23 +715,49 @@ class PortraitView(View):
                 if base64_head_index != -1:
                     print("进行了替换")
                     img_base64 = img_base64.partition(";base64,")[2]
-                file_name = MD5.md5(user.username) + ".user"
+                img_type = "user"
+                if_local = False
+                if "if_local" in data.keys():
+                    if_local = data["if_local"]
+                    if not isinstance(if_local, bool):
+                        if_local = False
+                md5 = MD5.md5("users" + user.username)
+                pic_name = md5 + "." + img_type
+                file_name = os.path.join("users", pic_name)
                 # print("-------接收到数据-------\n", img_base64, "\n-------数据结构尾-------")
                 try:
                     img_file = base64.b64decode(img_base64)
                 except Exception as e:
                     return JsonResponse({"id": id, "status": 100, "message": "Error base64 data", "data": {}})
-                # TODO 优化文件存储的效率（使用多线程），包括后期的人脸数据
-                # TODO 后期对图片文件进行加密处理
-                try:
-                    with open(os.path.join(settings.MEDIA_ROOT, "users", file_name), "wb") as f:
-                        f.write(img_file)
-                except Exception as e:
-                    return JsonResponse({"id": id, "status": 101, "message": "Upload portrait failed", "data": {}})
-                user.image = "users/{}".format(file_name)
+
+                if if_local:
+                    result, url = LocalWrite(file_name, img_file)
+                else:
+                    result, url = CosWrite(file_name, img_file)
+                local_url = None
+                cos_url = None
+                if result:
+                    if if_local:
+                        local_url = url
+                        user.image = url
+                        url = "/media/" + url
+                    else:
+                        user.image = url
+                        cos_url = url
+                else:
+                    if if_local:
+                        # status -600 本地上传失败
+                        return JsonResponse({"id": id, "status": -600, "message": "Local upload Error", "data": {}})
+                    else:
+                        # status -500 本地上传失败
+                        return JsonResponse({"id": id, "status": -500, "message": "COS upload Error", "data": {}})
+                defaults = {"content": "", "md5": md5, "if_local": if_local, "local_url": local_url,
+                            "cos_url": cos_url}
+                PicBed.objects.update_or_create(defaults=defaults, name=user.username, upload_to="users")
                 user.save()
+
                 return JsonResponse({"id": id, "status": 0, "message": "Successful", "data": {
-                    "url": "/api/user/portrait/?username={}".format(user.username)}})
+                    "url": url}})
             else:
                 # status -2 json的value错误。
                 return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
@@ -724,3 +770,39 @@ def login_user_nopass(request, user):
     user.backend = 'django.contrib.auth.backends.ModelBackend'
     from django.contrib.auth import login
     return login(request, user)
+
+
+def PicUrl(file_name: str) -> str:
+    path = file_name.split("\\")
+    path = "/".join(path)
+    # path = path
+    return path
+
+
+def LocalWrite(file_name: str, bytes: bytes) -> tuple:
+    path_list = file_name.split("\\")
+    file = path_list.pop(-1)
+    path = "\\".join(path_list)
+    path = os.path.join(settings.MEDIA_ROOT, path)
+    os.makedirs(path, exist_ok=True)
+    path = os.path.join(path, file)
+    try:
+        with open(path, "wb") as f:
+            f.write(bytes)
+        url = PicUrl(file_name)
+    except Exception as e:
+        return False, ""
+    return True, url
+
+
+def CosWrite(file_name: str, bytes: bytes) -> tuple:
+    path = file_name.split("\\")
+    path = "/".join(path)
+    print(path)
+    try:
+        COS.bytes_upload(body=bytes, key=path)
+    except Exception as e:
+        print(e)
+        return False, ""
+    path = settings.COS_ROOTURL + path
+    return True, path

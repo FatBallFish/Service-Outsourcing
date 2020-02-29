@@ -31,6 +31,6 @@ class CustomerServer(BaseModel):
     user_phone.short_description = "手机号"
 
     def user_image(self):
-        return format_html('<img src="/media/{}" style="width:64px;height:auto">', self.user.image)
+        return format_html('<img src="/api/pic/get/users?name={}" style="width:64px;height:auto">', self.user.username)
 
     user_image.short_description = "用户头像"

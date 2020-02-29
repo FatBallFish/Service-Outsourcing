@@ -425,6 +425,10 @@ Please refer to [Global Status Table](#Global Status Table)
 
 **2.已修改请求返回值的错误**
 
+**2020年2月19日23:53:05**
+
+返回数据中新增`if_face`字段，类型为`boolean`，用于判断此用户是否已注册了人脸
+
 > **URL**
 
 `https://hotel.lcworkroom.cn/api/user/info/?token=`
@@ -476,6 +480,7 @@ Please refer to [Global Status Table](#Global Status Table)
         "email": "893721708@qq.com", 
         "phone": "13750687010",
         "ID": "33108219991127089X", 
+        "if_face":true
         }
 }
 
@@ -510,7 +515,7 @@ Please refer to [Global Status Table](#Global Status Table)
 | :----: | :----------: | :----------: |
 |  100   | No Such User | 无该账号记录 |
 
-## User Info - Update（有修改）
+## User Info - Update
 
 > **API Description**
 
@@ -518,7 +523,13 @@ Please refer to [Global Status Table](#Global Status Table)
 
 ​	通过`token`或`username`值更新对应或指定的用户信息
 
-**修改（2020年1月28日01:00:21）**
+**--修改日志--**
+
+**2020年2月13日00:13:40**
+
++ 将`real_auth_id`和`face_id`字段改为Null字段，若将这两个字段设置null，表示解绑实名认证库与人脸认证库。且若实名认证库解绑，人脸认证库自动解绑，反之不会。
+
+**2020年1月28日01:00:21**
 
 + 可更新字段中增加了`face_id`，`real_auth_id`两个字段
 
@@ -556,8 +567,8 @@ Please refer to [Global Status Table](#Global Status Table)
 |    phone     | string |   11   |      |    √    | 用户手机号，**暂不允许被修改** |
 |   nickname   | string |   20   |  √   |    √    |            用户昵称            |
 |    email     | string |   50   |  √   |    √    |            邮箱地址            |
-| real_auth_id | string |   18   |      |    √    |    实名认证库id（身份证号）    |
-|   face_id    | string |   18   |      |    √    |     人脸数据id（身份证号）     |
+| real_auth_id | string |   18   |  √   |    √    |    实名认证库id（身份证号）    |
+|   face_id    | string |   18   |  √   |    √    |     人脸数据id（身份证号）     |
 
 > **Notice**
 
@@ -775,7 +786,7 @@ Please refer to [Global Status Table](#Global Status Table)
 |  102   |             Error password             |     错误的密码     |
 |  103   | Password cannot be the same as account | 密码不能与账号一致 |
 
-## User Portrait - Get
+## User Portrait - Get（重要更新）
 
 > **API Description**
 
@@ -783,9 +794,17 @@ Please refer to [Global Status Table](#Global Status Table)
 
 ​	通过传递`username`参数获取指定用户头像，返回头像二进制数据
 
+**修改**
+
+**2020年2月19日23:49:20**
+
+此API将全线重定向至`/api/pic/get/users/?name=`,详情请看[Pic - Get](#Pic - Get)API，此API将在后期版本不再维护，若出现bug请使用[Pic - Get](#Pic - Get)API
+
 >  **URL**
 
 `https://hotel.lcworkroom.cn/api/user/portrait/?username=`
+
+此API将全线重定向至`/api/pic/get/users/?name=`,详情请看[Pic](#Pic - Get)API
 
 > **URL Param**
 
@@ -799,13 +818,19 @@ Please refer to [Global Status Table](#Global Status Table)
 + 访问此API的ip若非允许内的ip将被阻截（后期想改成返回禁止访问图片`ban.jpg`）
 + 若用户未上传过头像时将返回默认头像数据
 
-## User Portrait - Upload
+## User Portrait - Upload（重要更新）
 
 > **API Description**
 
 `POST`
 
 ​	通过传递的`token`参数以及图片base64数据对指定用户进行图片更新
+
+**修改**
+
+**2020年2月19日23:54:34**
+
+此API将与[Pic - Upload](#Pic - Upload)适配，新增`if_local`与`type`字段，并将所有请求转接至[Pic - Upload](#Pic - Upload)，后期建议使用新API，此API后期也许会被取消
 
 > **URL**
 
@@ -832,15 +857,19 @@ Please refer to [Global Status Table](#Global Status Table)
 
 > **Data Param**
 
-| Field  |  Type  | Length | Null | Default | **Description** |
-| :----: | :----: | :----: | :--: | :-----: | :-------------: |
-| base64 | string |        |      |         | 图片base64数据  |
+|  Field   |  Type   | Length | Null | Default |        **Description**        |
+| :------: | :-----: | :----: | :--: | :-----: | :---------------------------: |
+|  base64  | string  |        |      |         |        图片base64数据         |
+| if_local | boolean |        |      |    √    | 图片是否存在本地，默认为flase |
+|   type   | string  |        |      |    √    |   图片后缀名，默认为`user`    |
 
 > **Notice**
 
 + API自动根据`token`值更新对应用户的头像
 + `base64`数据是否去除头信息都无所谓。（头信息例子：`image/jpg;base64,`)
 + 用户多次上传头像则之前的头像数据将被覆写，只保留最后一次上传的数据
++ `type`中不可包含点`.`，必须由英文字母组成
++ `if_local`用来指定图片上传位置，`false`则上传至COS储存服务器中，网速更快；`true`上传至服务器本地中。若传递的参数非`boolean`型，则默认值为`false`
 
 > **Response Success Example**
 
@@ -1926,7 +1955,7 @@ Please refer to [Global Status Table](#Global Status Table)
 
 null
 
-## Face - Register（重要更新）
+## Face - Register
 
 > **API Description**
 
@@ -2030,7 +2059,7 @@ Please refer to [Global Status Table](#Global Status Table)
 |  102   |    No face data in base64    |  图片中无人脸数据  |
 |  103   | Too much face data in base64 | 图片中人脸数据过多 |
 
-## Face - Find（重要更新）
+## Face - Find
 
 > **API Description**
 
@@ -2240,7 +2269,7 @@ Please refer to [Global Status Table](#Global Status Table)
 | :----: | :--------------------: | :--------------: |
 |  100   | No face data in base64 | 图片中无人脸信息 |
 
-## Face - Verify（重要更新）
+## Face - Verify
 
 > **API Description**
 
@@ -2411,6 +2440,764 @@ Please refer to [Global Status Table](#Global Status Table)
 |  101   |    No face data in base64    |  图片中无人脸信息  |
 |  102   | Too much face data in base64 | 图片中人脸数据过多 |
 
+# Map
+
+**地图类**
+
+## District - Get
+
+> **API Description**
+
+`GET`
+
+​	转接高德地图行政区域查询API，精简返回结果
+
+​	点击进入[高德行政区域查询API地址](https://lbs.amap.com/api/webservice/guide/api/district)
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/map/district/?params`
+
+> **URL Param**
+>
+> 所有参数与高德地图api一致，若传了非高德地图api的参数，将自动忽略。具体规则请查阅[高德行政区域查询API地址](https://lbs.amap.com/api/webservice/guide/api/district)
+
+|    Field    |  Type  | Length | Null | Default |         **Description**          |
+| :---------: | :----: | :----: | :--: | :-----: | :------------------------------: |
+|     key     | string |   32   |      |    √    | 请求服务权限标识。**已内置初始值** |
+|  keywords   | srting |        |      |    √    |            查询关键字            |
+| subdistrict |  int   |        |      |    √    |            子级行政区            |
+|    page     |  int   |        |      | √ |          需要第几页数据          |
+|   offset    |  int   |        |      | √        |        最外层返回数据个数        |
+| extensions  |   string    |        |      |   √      |           返回结果控制           |
+|   filter    | int |        |      | √ |           根据区划过滤           |
+|  callback   | function |        |      | √ |             回调函数。**请勿使用**             |
+|   output    | string |        |      | √ |        返回数据格式类型。**已内置初始值，不可修改**        |
+
+> **Notice**
+
++ 以上字段中`key`与`output`已二次封装内置，可忽略。
++ 其他字段若缺省则使用高德api默认字段值
++ `callback`字段请勿传值
+
+> **Response Success Example**
+>
+> 已对高德api的返回值进行了精简，外层处理成与api相同样式，内层删除不必要的字段值
+
+```python
+{
+    "id": -1, 
+    "status": 0, 
+    "message": "OK",
+    "data": {
+        "districts": [
+            {
+                "name": "\u6d59\u6c5f\u7701", 
+                "districts": [
+                    {
+                        "name": "\u821f\u5c71\u5e02", 
+                        "districts": []
+                    }, 
+                    {
+                        "name": "\u5b81\u6ce2\u5e02", 
+                        "districts": []
+                    }, 
+                    {
+                        "name": "\u5609\u5174\u5e02", 
+                        "districts": []
+                    }, 
+                    {
+                        "name": "\u53f0\u5dde\u5e02", 
+                        "districts": []
+                    }, 
+                    {
+                        "name": "\u6e29\u5dde\u5e02", 
+                        "districts": []
+                    }, 
+                    {
+                        "name": "\u4e3d\u6c34\u5e02", 
+                        "districts": []
+                    }, 
+                    {
+                        "name": "\u7ecd\u5174\u5e02", 
+                        "districts": []
+                    }, 
+                    {
+                        "name": "\u6e56\u5dde\u5e02", 
+                        "districts": []
+                    },
+                    {
+                        "name": "\u8862\u5dde\u5e02", 
+                        "districts": []
+                    }, 
+                    {
+                        "name": "\u91d1\u534e\u5e02", 
+                        "districts": []
+                    }, 
+                    {
+                        "name": "\u676d\u5dde\u5e02", 
+                        "districts": []
+                    }
+                ]
+            }
+        ]
+    }
+}
+
+
+```
+
+> **Response Failed Example**
+
+```python
+{
+    "id": -1, 
+    "status": 1000, 
+    "message": "Missing necessary args", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -100   |
+
+> **Local Status**
+>
+> 二次封装时将高德中的`status`去除，将`infocode`改为`status`并从`string`转为了`int`型数据，将`info`改为`message`。并加入了`100`状态码
+
+| Status |    Message     | Description |
+| :----: | :------------: | :---------: |
+|  100   | Get Json Error |     API请求失败     |
+
+**其余状态码与状态信息请查阅[高德行政区域查询错误码](https://lbs.amap.com/api/webservice/guide/tools/info)**
+
+# Pic（新增）
+
+**图床类**
+
+## Pic - Get（新增）
+
+> **API Description**
+
+`GET`
+
+​	获取由此POST命令上传的图片，成功直接重定向至图片url，否则重定向至error提示图片
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/pic/get/<path:upload_to>?name=`
+
+> **URL Param**
+
+|   Field   |  Type  | Length | Null | Default |       **Description**        |
+| :-------: | :----: | :----: | :--: | :-----: | :--------------------------: |
+| upload_to | string |        |      |         | 图片所处目录，由post请求决定 |
+|   name    | srting |        |      |         |   图片名称，由post请求决定   |
+
+> **Notice**
+
++ `upload_to`符合restful风格，可包含`/`，例如`test/fff`
++ `name`为url参数
++ 此api会自动重定向到图片所在url里，因此在调用此api时只要将其填入类似`src`的参数中即可
++ 若指定的图片不存在，自动重定向至参数error图片
++ `url`末尾是否有`/`都可
+
+> **URL Example**
+
+```
+<img src="https://hotel.lcworkroom.cn/api/pic/get/abc?name=%E6%B5%8B%E8%AF%95%E5%9B%BE%E7%89%87" />
+```
+
+![测试图片](https://hotel.lcworkroom.cn/api/pic/get/abc?name=%E6%B5%8B%E8%AF%95%E5%9B%BE%E7%89%87)
+
+> **Error图片**
+
+![错误图片](https://hotel.lcworkroom.cn/media/default/error.jpg)
+
+## Pic - Upload（新增）
+
+> **API Description**
+
+`POST`
+
+​	获取由此POST命令上传的图片，成功直接重定向至图片url，否则重定向至error提示图片
+
+后期打算增加身份验证，并扩充其api的用途
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/pic/`
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"pic",
+    "subtype":"upload",
+    "data":{
+        "name": "测试图片", 
+        "content": "测试哒哒哒", 
+        "type": "jpg", 
+        "upload_to": "test/fff", 
+        "if_local": False,
+        "base64":"...",
+    }
+}
+```
+
+> **Data Param**
+
+|   Field   |  Type   | Length | Null | Default |          **Description**           |
+| :-------: | :-----: | :----: | :--: | :-----: | :--------------------------------: |
+|   name    | string  |        |      |         |       图片名称，用于get请求        |
+| upload_to | string  |        |      |         |   图片所上传的位置，用于get请求    |
+|  base64   | string  |        |      |         |           图片base64数据           |
+|  content  | string  |        |      |    √    | 图片描述，用于后台显示，默认空文本 |
+|   type    | string  |        |      |    √    |       图片后缀名，默认`file`       |
+| if_local  | boolean |        |      |    √    |     是否存储到本地，默认flase      |
+
+> **Notice**
+
++ `name`与`upload_to`组成主键，若上传了已存在的主键将覆盖保存此记录对应的图片
++ 根据上一条规则，此API也可用于更新已存在的图片记录
++ `name`字段**不可包含**有点`.`和`/`等符号，建议使用中英文，若出现其他标点符号可能会出现未知错误
++ `upload_to`**只可包含**`/`或`_`标点符号，且`uoload_to`符合URL的组成规则，不可有中文字符，否则可能会出现未知错误
++ `base64`数据是否去除头信息都无所谓。（头信息例子：`image/jpg;base64,`)
++ `type`中不可包含点`.`，必须由英文字母组成
++ `if_local`用来指定图片上传位置，`false`则上传至COS储存服务器中，网速更快；`true`上传至服务器本地中。若传递的参数非`boolean`型，则默认值为`false`
++ 用此api可以实现对其他api的图片进行覆盖
+
+> **Upload_to与name模式**
+>
+> 用以下特定的`upload_to`以及`name`可对其他的api图片进行覆盖操作
+>
+> 目前暂无法限制修改他人头像的行为，等后期增加权限验证后可解决此问题
+
+| upload_to |     name     |  可覆盖  |                             备注                             |
+| :-------: | :----------: | :------: | :----------------------------------------------------------: |
+|   users   | 用户username | 用户头像 | 在此API上线之前的用户头像需重新用此API上传头像后才可用<br />使用此api后type不管传什么值固定为`user` |
+
+> **不可用的upload_to值**
+>
+> 因为权限原因，若upload_to值指定为以下字段，将返回`200`无权操作返回码，因为这些值对应的数据为敏感数据，不能使用此API上传更新
+
+| upload_to  |   对应数据   |
+| :--------: | :----------: |
+| faces_data | 人脸注册信息 |
+
+
+
+> **Response Success Example**
+>
+> 根据请求时`if_local`的值，返回对应的图片url。
+>
+> 本地url为相对路径，例如`/media/test/fff/100ac4baafa990d6edc7810052d3e772.jpg`
+
+```python
+{
+    "id": 1234, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {
+        "url": "https://hotel-1251848017.cos.ap-shanghai.myqcloud.com/test/fff/100ac4baafa990d6edc7810052d3e772.jpg"
+    }
+}
+```
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": 100, 
+    "message": "No Such User", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -600   |
+| -500   |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+| Status |       Message       |   Description    |
+| :----: | :-----------------: | :--------------: |
+|  100   |  Error base64 data  | 错误的base64数据 |
+|  200   | No right to operate |    无权限操作    |
+
+# 
+
+> **Notice**
+
++ `upload_to`符合restful风格，可包含`/`，例如`test/fff`
++ `name`为url参数
++ 此api会自动重定向到图片所在url里，因此在调用此api时只要将其填入类似`src`的参数中即可
++ 若指定的图片不存在，自动重定向至参数error图片
+
+# Msg类
+
+**站内信类**
+
+## Msg - has_new
+
+> **API Description**
+
+`POST`
+
+此API用于获取用户的新消息条数，成功返回系统新站内信条数，新私聊条数和私聊条数详情
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/msg/?token=`
+
+> **URL Param**
+
+| Field |  Type  | Length | Null | Default | **Description** |
+| :---: | :----: | :----: | :--: | :-----: | :-------------: |
+| token | string |   32   |      |         |    用户凭证     |
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"msg",
+    "subtype":"has_new",
+    "data":{}
+}
+```
+
+> **Response Success Example**
+
+```python
+{
+    "id": 0, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {
+        "sys": 4, 
+        "private": 3, 
+        "private_detail": {
+            "13750687010": 2, 
+            "13735866541": 1
+        }
+    }
+}
+```
+
+> **Response Data Param**
+
+|     Field      | Type |  **Description**   |
+| :------------: | :--: | :----------------: |
+|      sys       | int  |   系统新消息条数   |
+|    private     | int  |  新私聊站内信条数  |
+| private_detail | json | 私聊站内信条数详情 |
+
+> **Notice**
+
++ `private_detail`中的格式为：`私聊对象`:`新消息条数`，无`num`字段统计，需自行判断
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": -100, 
+    "message": "Missing necessary args", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -101   |
+| -100   |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+**null**
+
+## Msg - sys
+
+> **API Description**
+
+`POST`
+
+此API用于获取发给用户的所有系统站内信，并自动**按发送时间降序排序**
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/msg/?token=`
+
+> **URL Param**
+
+| Field |  Type  | Length | Null | Default | **Description** |
+| :---: | :----: | :----: | :--: | :-----: | :-------------: |
+| token | string |   32   |      |         |    用户凭证     |
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"msg",
+    "subtype":"sys",
+    "data":{
+        "if_new":2
+    }
+}
+```
+
+> **Data Param**
+
+| Field  | Type | Length | Null | Default |                       **Description**                        |
+| :----: | :--: | :----: | :--: | :-----: | :----------------------------------------------------------: |
+| if_new | int  |        |      |    √    | 消息过滤模式，可选值：`0`获取新消息;`1`获取已读消息;`2`获取全部消息。默认为`0` |
+
+> **Notice**
+
++ 当`if_new`不为可选值范围时，将自动判定为获取新消息
+
+> **Response Success Example**
+
+```python
+{
+    "id": 0, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {
+        "num": 1, 
+        "list": [
+            {
+                "msg_id": 1, 
+                "title": "这是一条测试通知", 
+                "content": "嗯？我就测试一下", 
+                "add_time": 1582964040.0, 
+                "status": false
+            }
+        ]
+    }
+}
+```
+
+> **Response Data Param**
+
+|  Field   |  Type   |          **Description**           |
+| :------: | :-----: | :--------------------------------: |
+|  msg_id  |   int   | 此消息的消息id，保留字段，暂无用处 |
+|  title   | string  |              消息标题              |
+| content  | string  |              消息内容              |
+| add_time |  float  |          站内信发送时间戳          |
+|  status  | boolean |            消息阅读状态            |
+
+> **Notice**
++ 消息阅读状态目前处理办法为：调用获取的api后，自动将其变为已读状态
++ 不论是系统群发还是单独发送的站内信，全部规整到此api
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": -100, 
+    "message": "Missing necessary args", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -101   |
+| -100   |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+**null**
+
+## Msg - private
+
+> **API Description**
+
+`POST`
+
+此API用于获取用户发送出去或者发送给用户的所有私聊站内信，并自动**按发送时间升序排序**
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/msg/?token=`
+
+> **URL Param**
+
+| Field |  Type  | Length | Null | Default | **Description** |
+| :---: | :----: | :----: | :--: | :-----: | :-------------: |
+| token | string |   32   |      |         |    用户凭证     |
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"msg",
+    "subtype":"private",
+    "data":{
+        "if_new":2
+    }
+}
+```
+
+> **Data Param**
+
+| Field  | Type | Length | Null | Default |                       **Description**                        |
+| :----: | :--: | :----: | :--: | :-----: | :----------------------------------------------------------: |
+| if_new | int  |        |      |    √    | 消息过滤模式，可选值：`0`获取新消息;`1`获取已读消息;`2`获取全部消息。默认为`0` |
+
+> **Notice**
+
++ 当`if_new`为`0`的时候，用户发送且对方未读的消息将不返回，因为这类消息对于用户自己来说是已读消息
++ 当`if_new`不为可选值范围时，将自动判定为获取新消息
+
+> **Response Success Example**
+
+```python
+{
+    "id": 0, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {
+        "records_num": 4, 
+        "unit_num": 2, 
+        "list": [
+            {
+                "people": "13750687010", 
+                "num": 3, 
+                "records": [
+                    {
+                        "source": 0, 
+                        "msg_id": 2, 
+                        "title": "你好", 
+                        "content": "你好鸭", 
+                        "add_time": 1582964040.0, 
+                        "status": false
+                    }, 
+                    {
+                        "source": 0, 
+                        "msg_id": 4, 
+                        "title": "你好", 
+                        "content": "你好鸭", 
+                        "add_time": 1582984020.0, 
+                        "status": false
+                    }, 
+                    {
+                        "source": 1, 
+                        "msg_id": 5, 
+                        "title": "回复", 
+                        "content": "你也好呀！", 
+                        "add_time": 1582985310.489896, 
+                        "status": false
+                    }
+                ]
+            }, 
+            {
+                "people": "13735866541", 
+                "num": 1, 
+                "records": [
+                    {
+                        "source": 0, 
+                        "msg_id": 3, 
+                        "title": "你好", 
+                        "content": "你好鸭", 
+                        "add_time": 1582983960.0, 
+                        "status": false
+                    }
+                ]
+            }
+        ]
+    }
+}
+```
+
+> **Response Data Param**
+
+> **list结构**
+
+|  Field  |  Type  | **Description** |
+| :-----: | :----: | :-------------: |
+| people  | string |   私聊对象id    |
+|   num   |  int   |    私聊条数     |
+| records |  list  |    消息列表     |
+
+> **records结构**
+
+| Field  | Type | **Description** |
+| :----: | :--: | :-------------: |
+| source | int  |  消息类型，可选值：`0`:其他人发来的消息；`1`:用户发送的消息  |
+|  msg_id  |   int   | 此消息的消息id，保留字段，暂无用处 |
+|  title   | string  |              消息标题              |
+| content  | string  |              消息内容              |
+| add_time |  float  |          站内信发送时间戳          |
+|  status  | boolean |            消息阅读状态            |
+
+> **Notice**
+
++ 消息阅读状态目前处理办法为：调用获取的api后，自动将其变为已读状态
++ 在私聊中建议使用`content`字段传递聊天内容，保留`title`的原因是打算后期做成卡片式分享时用到。
++ 私聊消息之所以用消息列表式返回格式是为了前端更方便处理，同时也是借鉴了b站与其他论坛的格式
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": -100, 
+    "message": "Missing necessary args", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -101   |
+| -100   |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+**null**
+
+## Msg - send
+
+> **API Description**
+
+`POST`
+
+此API用于发送私聊站内信给指定用户
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/msg/?token=`
+
+> **URL Param**
+
+| Field |  Type  | Length | Null | Default | **Description** |
+| :---: | :----: | :----: | :--: | :-----: | :-------------: |
+| token | string |   32   |      |         |    用户凭证     |
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"msg",
+    "subtype":"send",
+    "data":{
+        "receiver": "13750687010", 
+        "title": "回复", 
+        "content": "你也好呀！"
+    }
+}
+```
+
+> **Data Param**
+
+|  Field   |  Type  | Length | Null | Default |    **Description**     |
+| :------: | :----: | :----: | :--: | :-----: | :--------------------: |
+| receiver | string |   11   |      |         |      接收者用户名      |
+|  title   | string |  100   |      |         | 消息标题，建议为空文本 |
+| content  | string |        |      |         |        消息内容        |
+
+> **Notice**
+
++ 在私聊中建议使用`content`字段传递聊天内容，`title`字段一般情况建议为空文本。
++ 保留`title`的原因是打算后期做成卡片式分享时用到。
+
+> **Response Success Example**
+
+```python
+{
+    "id": 0, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {
+        "msg_id": 5
+    }
+}
+```
+
+> **Response Data Param**
+
+| Field  | Type |          **Description**           |
+| :----: | :--: | :--------------------------------: |
+| msg_id | int  | 此消息的消息id，保留字段，暂无用处 |
+
+> **Notice**
+
++ 用户不存在返回`100`错误;消息正文创建失败返回`101`错误
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": -100, 
+    "message": "Missing necessary args", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -101   |
+| -100   |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+| Status |          Message          |   Description    |
+| :----: | :-----------------------: | :--------------: |
+|  100   |      Error receiver       |   错误的接收者   |
+|  101   | Create MessageText Failed | 创建消息内容失败 |
+
 # 硬件终端接口暂不写说明文档
 
 **因为随时有可能会调整**
@@ -2428,7 +3215,7 @@ Please refer to [Global Status Table](#Global Status Table)
 |   -2   |          Error JSON value          |          json文本value错误          | POST      |
 |   -3   |           Error data key           |      data中有非预料中的key字段      | POST      |
 |   -4   |             Error Hash             |          Hash校验文本错误           | POST      |
-|  -100  |       Missing necessary args       |       api地址中缺少token参数        | POST、GET |
+|  -100  |       Missing necessary args       |  api地址中缺少token或其他必需参数   | POST、GET |
 |  -101  |            Error token             |             token不正确             | POST、GET |
 |  -102  |  Get userid failed for the token   |       使用token获取userid失败       | POST、GET |
 |  -103  |      No permission to operate      |            用户无权操作             | POST      |
@@ -2440,6 +3227,7 @@ Please refer to [Global Status Table](#Global Status Table)
 |  -204  |         Arg's value error          |           键值对数据错误            | POST      |
 |  -404  |           Unknown Error            |           未知的Redis错误           | POST      |
 |  -500  |          COS upload Error          |           COS储存上传失败           | POST      |
+|  -600  |         Local upload Error         |            本地上传失败             | POST      |
 
 ------
 

@@ -6,11 +6,11 @@ from apps.devices.models import Device, DeviceGroup
 
 class DeviceAdmin(admin.ModelAdmin):
     fieldsets = (
-        ("设备信息", {'fields': ('device_id', 'device_name', 'device_content', 'hotel')}),
+        ("设备信息", {'fields': ('device_id', 'device_name', 'device_content', 'hotel', 'password')}),
     )
     # readonly_fields = ('device_id', 'device_name', 'device_content')
     # 列表页显示内容
-    list_display = ('device_id', 'device_name', 'device_content', 'hotel', 'is_online')
+    list_display = ('device_id', 'device_name', 'device_content', 'hotel', 'is_online', 'password')
     list_display_links = list_display  # 列表中可点击跳转的字段
 
     search_fields = ('device_id', 'device_name', 'device_content')  # 列表搜索字段

@@ -13,6 +13,7 @@ class Device(BaseModel):
     device_content = models.TextField(verbose_name="设备描述", blank=True, null=True)
     hotel = models.ForeignKey(verbose_name="所属酒店", to=Hotel, on_delete=models.CASCADE, blank=True, null=True)
     is_online = models.BooleanField(verbose_name="是否在线", default=False)
+    password = models.CharField(verbose_name="登录密码", max_length=64)
 
     class Meta:
         verbose_name = "设备信息"
@@ -56,10 +57,9 @@ def DeviceDoki(device_id: str) -> Tuple[bool, Device]:
         return False, None
     return True, device
 
-
-def GetBindDevice(user: object) -> list:
-    deviceuser_list = DeviceUser.objects.filter(user=user)
-    data_list = []
-    for deviceuser in deviceuser_list:
-        data_list.append(deviceuser.device)
-    return data_list
+# def GetBindDevice(user: object) -> list:
+#     deviceuser_list = DeviceUser.objects.filter(user=user)
+#     data_list = []
+#     for deviceuser in deviceuser_list:
+#         data_list.append(deviceuser.device)
+#     return data_list

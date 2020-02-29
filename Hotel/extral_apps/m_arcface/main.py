@@ -26,6 +26,7 @@ def _draw_face_info(image: np.ndarray, face_info: FaceInfo) -> dict:
     rect = face_info.rect
     # print(face_info.gender, type(face_info.gender))
     json_dict = {
+        "face_id":face_info.arc_face_info.face_id,
         "ID": face_info.ID,
         "age": face_info.age,
         "threshold": float("{:.2f}".format(face_info.threshold)),

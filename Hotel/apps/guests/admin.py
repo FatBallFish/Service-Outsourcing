@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from apps.guests.models import Guests, GuestRoom, Visitor, GuestVisitor
+from apps.guests.models import Guests, GuestRoom, Visitor, GuestVisitor, Orders
 
 
 # Register your models here.
@@ -43,7 +43,8 @@ class GuestRoomAdmin(admin.ModelAdmin):
           "classes": ("collaspe", 'wide'),
           "description": "<strong>用户预订的房间信息</strong>"}),
         ("预订信息", {"fields": ('status', 'check_in_time', 'check_out_time'),
-                  "description": "<strong>用户预订的房间信息</strong>"})
+                  "description": "<strong>用户预订的房间信息</strong>"}),
+        ("订单信息", {'fields': ('name', 'order')})
     )
 
     readonly_fields = (
@@ -51,7 +52,9 @@ class GuestRoomAdmin(admin.ModelAdmin):
         "room_name", "room_content", "room_type")
     # 显示界面
     # fields 和 fieldsets不能共存
-    list_display = ('id', 'guest', 'room_hotel', 'room', 'read_status', 'check_in_time', "check_out_time")  # 列表中显示的字段
+    list_display = (
+        'id', 'guest', 'room_hotel', 'room', 'read_status', 'check_in_time', "check_out_time", 'name',
+        'order')  # 列表中显示的字段
 
     def read_status(self, guestroom):
         if guestroom.status == "booking":
@@ -108,16 +111,17 @@ class VisitorAdmin(admin.ModelAdmin):
 class GuestVisitorAdmin(admin.ModelAdmin):
     # 编辑界面
     fieldsets = (
-        ("预约基本信息", {'fields': ('guest', 'visitor', 'apply_time', 'visitor_content', 'guest_content', 'status')}),
-        ("访客信息", {"fields": ('visitor_ID', 'visitor_name', 'visitor_sex', 'visitor_age', 'visitor_phone')}),
-        ("来宾信息", {"fields": ('guest_ID', 'guest_name', 'guest_sex', 'guest_age', 'guest_phone')}),
+        ("预约基本信息", {'fields': (
+            'guest', 'visitor', 'apply_time', 'visitor_content', 'guest_content', 'status', 'start_time', 'end_time')}),
+        ("访客信息", {"fields": ('visitor_ID', 'visitor_name', 'visitor_gender', 'visitor_age', 'visitor_phone')}),
+        ("来宾信息", {"fields": ('guest_ID', 'guest_name', 'guest_gender', 'guest_age', 'guest_phone')}),
     )
     readonly_fields = (
         'visitor_ID', 'visitor_name', 'visitor_gender', 'visitor_age', 'visitor_phone', 'guest_ID', 'guest_name',
         'guest_gender', 'guest_age', 'guest_phone')
     # 显示界面
     # fields 和 fieldsets不能共存
-    list_display = ('id', 'guest', 'visitor', 'apply_time', 'read_status')  # 列表中显示的字段
+    list_display = ('id', 'guest', 'visitor', 'apply_time', 'read_status', 'start_time', 'end_time')  # 列表中显示的字段
 
     def read_status(self, request):
         if request.status == "applying":
@@ -131,6 +135,8 @@ class GuestVisitorAdmin(admin.ModelAdmin):
             status = "拒绝访问"
         return format_html('<div style="color:{};">{}</div>', color, status)
 
+    read_status.short_description = "申请状态"
+
     list_display_links = list_display  # 列表中可点击跳转的字段
     search_fields = (
         'guest__real_auth__name', 'guest__user__phone', 'visitor__real_auth__name', 'visitor__user__phone',
@@ -140,7 +146,46 @@ class GuestVisitorAdmin(admin.ModelAdmin):
     list_per_page = 10  # 列表每页最大显示数量，默认100
 
 
+class OrderAdmin(admin.ModelAdmin):
+    # 编辑界面
+    fieldsets = (
+        ("订单基本信息",
+         {'fields': (
+             'id', 'status', 'guest', 'guests', 'date_start', 'date_end', 'days', 'price', 'totalprice', 'add_time',
+             'update_time',
+             'pay_time')}),
+        ("酒店信息", {"fields": ('hotel', 'room')}),
+    )
+    readonly_fields = ('id',)
+    # readonly_fields = (
+    #     'visitor_ID', 'visitor_name', 'visitor_gender', 'visitor_age', 'visitor_phone', 'guest_ID', 'guest_name',
+    #     'guest_gender', 'guest_age', 'guest_phone')
+    # 显示界面
+    # fields 和 fieldsets不能共存
+    list_display = ('id', 'guest', 'add_time', 'price', 'totalprice', 'read_status')  # 列表中显示的字段
+
+    def read_status(self, request):
+        if request.status == 0:
+            color = "blue"
+            status = "未支付"
+        else:
+            color = "red"
+            status = "其他状态"
+        return format_html('<div style="color:{};">{}</div>', color, status)
+
+    read_status.short_description = "订单状态"
+
+    list_display_links = list_display  # 列表中可点击跳转的字段
+    search_fields = (
+        'id', 'guest__real_auth__name', 'guest__user__phone', 'guests',
+        'add_time', 'pay_time',
+        'status')  # 列表搜索字段
+    list_filter = search_fields  # 列表筛选字段
+    list_per_page = 10  # 列表每页最大显示数量，默认100
+
+
 admin.site.register(Guests, GuestsAdmin)
 admin.site.register(GuestRoom, GuestRoomAdmin)
 admin.site.register(Visitor, VisitorAdmin)
 admin.site.register(GuestVisitor, GuestVisitorAdmin)
+admin.site.register(Orders, OrderAdmin)

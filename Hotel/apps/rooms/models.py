@@ -8,16 +8,23 @@ from apps.faces.models import FaceGroup
 # Create your models here.
 class Hotel(BaseModel):
     name = models.CharField(verbose_name="酒店名称", max_length=100)
-    content = models.CharField(verbose_name="备注", max_length=100, blank=True, null=True)
+    content = models.TextField(verbose_name="备注", blank=True, null=True)
     location = models.TextField(verbose_name="酒店地址")
+    imgs = models.TextField(verbose_name="图片集", default="")
+    lon = models.CharField(verbose_name="经度", max_length=30, null=True, blank=True)
+    lat = models.CharField(verbose_name="纬度", max_length=30, null=True, blank=True)
+    province = models.CharField(verbose_name="省份", max_length=20)
+    city = models.CharField(verbose_name="城市", max_length=20)
+    district = models.CharField(verbose_name="区域", max_length=20)
 
     class Meta:
+        managed = False
         verbose_name = "酒店管理"
         verbose_name_plural = verbose_name
         db_table = "hotels"
 
     def __str__(self):
-        return "{}({})".format(self.name, self.content)
+        return "{}({})".format(self.name, self.location)
 
 
 class HotelFaceGroup(BaseModel):
@@ -48,6 +55,16 @@ class HotelFaceGroup(BaseModel):
         return format_html(self.info_html, self.hotel.location)
 
     hotel_location.short_description = "酒店地址"
+
+    def hotel_lon(self):
+        return format_html(self.info_html, self.hotel.lon)
+
+    hotel_lon.short_description = "经度"
+
+    def hotel_lat(self):
+        return format_html(self.info_html, self.hotel.lat)
+
+    hotel_lat.short_description = "纬度"
 
     def group_id(self):
         return format_html(self.info_html, self.face_group.group_id)
@@ -98,3 +115,35 @@ class Room(BaseModel):
         return format_html(self.info_html, self.hotel.location)
 
     hotel_location.short_description = "酒店地址"
+
+    def hotel_lon(self):
+        return format_html(self.info_html, self.hotel.lon)
+
+    hotel_lon.short_description = "经度"
+
+    def hotel_lat(self):
+        return format_html(self.info_html, self.hotel.lat)
+
+    hotel_lat.short_description = "纬度"
+
+
+class Ambitus(models.Model):
+    name = models.CharField(verbose_name="周边名称", max_length=30)
+    img = models.CharField(verbose_name="周边图片", max_length=500)
+    tabs = models.CharField(verbose_name="周边标签", max_length=200)
+    lat = models.CharField(verbose_name="周边经度", max_length=30)
+    lon = models.CharField(verbose_name="周边纬度", max_length=30)
+    city = models.CharField(verbose_name="周边所在城市", max_length=20)
+
+    class Meta:
+        verbose_name = "周边"
+        verbose_name_plural = verbose_name
+        managed = False
+        db_table = 'ambitus'
+
+    def __str__(self):
+        return self.name
+
+    # def ambitus_img(self):
+    #     return format_html('<img src="{}" style="width:100px;height:auto">', self.img)
+    # ambitus_img.short_description = "周边图片"

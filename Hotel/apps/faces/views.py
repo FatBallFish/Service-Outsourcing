@@ -482,6 +482,48 @@ class FaceView(View):
             else:
                 # status -2 json的value错误。
                 return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
+        elif type == "feature":
+            if subtype == "list":
+                if "db" in data.keys():
+                    db = str(data["db"])
+                    try:
+                        db = int(db)
+                    except ValueError:
+                        db = 1
+                else:
+                    db = 1
+                if db == -1:
+                    face_list = FaceData.objects.all()
+                else:
+                    face_list = FaceData.objects.filter(faces_group_id=db)
+                data_list = []
+                for face in face_list:
+                    face_dict = {"ID": face.ID, "name": face.name, "gender": face.gender, "content": face.content,
+                                 "sign": face.sign, "pic_url": face.pic.url if face.if_local else face.cos_pic.url,
+                                 "db": db}
+                    data_list.append(face_dict)
+                # status 0 处理成功
+                return JsonResponse({"id": id, "status": 0, "message": "Successful",
+                                     "data": {"num": len(data_list), "list": data_list}})
+            elif subtype == "get":
+                if "ID" in data.keys():
+                    ID = str(data["ID"])
+                else:
+                    # status -3 json的value错误。
+                    return JsonResponse({"id": id, "status": -3, "message": "Error data key", "data": {}})
+                try:
+                    face = FaceData.objects.get(ID=ID)
+                except Exception as e:
+                    # status 100 错误的ID
+                    return JsonResponse({"id": id, "status": 100, "message": "Error ID", "data": {}})
+                face_dict = {"ID": face.ID, "name": face.name, "gender": face.gender, "content": face.content,
+                             "sign": face.sign, "pic_url": face.pic.url if face.if_local else face.cos_pic.url,
+                             "db": face.faces_group.id}
+                # status 0 成功处理
+                return JsonResponse({"id": id, "status": 0, "message": "Successful", "data": face_dict})
+            else:
+                # status -2 json的value错误。
+                return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
         else:
             # status -2 json的value错误。
             return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})

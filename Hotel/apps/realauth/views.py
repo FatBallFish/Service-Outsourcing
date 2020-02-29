@@ -6,6 +6,8 @@ from Hotel import settings
 from apps.tokens.models import Doki2
 from apps.realauth.models import RealAuth
 
+from extral_apps.m_map import py_map_main as Map
+
 from datetime import datetime
 import time
 import json
@@ -189,3 +191,15 @@ class RealAuthView(View):
         else:
             # status -2 json的value错误。
             return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
+
+
+class DistrictView(View):
+    def get(self, request, *args, **kwargs):
+        try:
+            param_dict = {}
+            for key in request.GET:
+                param_dict[key] = request.GET[key]
+        except Exception as e:
+            return JsonResponse({"id": -1, "status": -100, "message": "Missing necessary args", "data": {}})
+        json_dict = Map.getDistrict(**param_dict)
+        return JsonResponse(json_dict)

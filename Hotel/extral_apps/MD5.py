@@ -16,4 +16,4 @@ def md5_bytes(byte:bytes,salt:bytes=b'Hotel')->str:
     res = md.hexdigest()
     return res
 if __name__ == "__main__":
-    print(md5("nDtg4"))
+    print(md5("0000"))

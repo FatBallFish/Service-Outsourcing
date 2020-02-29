@@ -1,18 +1,19 @@
 from django.contrib import admin
-from apps.rooms.models import Hotel, Room, HotelFaceGroup
+from apps.rooms.models import Hotel, Room, HotelFaceGroup, Ambitus
 
 
 # Register your models here.
 class HotelAdmin(admin.ModelAdmin):
     # 编辑界面
     fieldsets = (
-        ("酒店信息", {'fields': ('name', "content", "location")}),)
+        ("酒店信息", {'fields': ('name', "content", "location", "imgs", "lon", "lat", "province", "city", "district")}),)
     # 显示界面
     # fields 和 fieldsets不能共存
-    list_display = ('id', 'name', 'content', 'location')  # 列表中显示的字段
+    list_display = (
+        'id', 'name', 'content', 'location', 'imgs', "lon", "lat", "province", "city", "district")  # 列表中显示的字段
     list_display_links = list_display  # 列表中可点击跳转的字段
 
-    search_fields = ('name', 'content', 'location')  # 列表搜索字段
+    search_fields = ('name', 'content', 'location', "province", "city")  # 列表搜索字段
     list_filter = search_fields  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
 
@@ -20,10 +21,10 @@ class HotelAdmin(admin.ModelAdmin):
 class RoomAdmin(admin.ModelAdmin):
     # 编辑界面
     fieldsets = (
-        ("酒店信息", {'fields': ('hotel', 'hotel_name', 'hotel_content', 'hotel_location')}),
+        ("酒店信息", {'fields': ('hotel', 'hotel_name', 'hotel_content', 'hotel_location', 'hotel_lon', 'hotel_lat')}),
         ("房间基本信息", {'fields': ('floor', "number", "name", "content", "room_type_name", "room_type_content")})
     )
-    readonly_fields = ('hotel_name', 'hotel_content', 'hotel_location')
+    readonly_fields = ('hotel_name', 'hotel_content', 'hotel_location', 'hotel_lon', 'hotel_lat')
 
     # 显示界面
     # fields 和 fieldsets不能共存
@@ -39,10 +40,12 @@ class RoomAdmin(admin.ModelAdmin):
 class HotelFaceGroupAdmin(admin.ModelAdmin):
     # 编辑界面
     fieldsets = (
-        ("酒店信息", {'fields': ('hotel', 'hotel_name', 'hotel_content', 'hotel_location')}),
+        ("酒店信息", {'fields': ('hotel', 'hotel_name', 'hotel_content', 'hotel_location', 'hotel_lon', 'hotel_lat')}),
         ("绑定人员库", {'fields': ('face_group', 'group_id', 'group_name', 'group_content')})
     )
-    readonly_fields = ('hotel_name', 'hotel_content', 'hotel_location', 'group_id', 'group_name', 'group_content')
+    readonly_fields = (
+        'hotel_name', 'hotel_content', 'hotel_location', 'hotel_lon', 'hotel_lat', 'group_id', 'group_name',
+        'group_content')
     # 显示界面
     # fields 和 fieldsets不能共存
     list_display = ('id', 'hotel', 'face_group')  # 列表中显示的字段
@@ -53,6 +56,26 @@ class HotelFaceGroupAdmin(admin.ModelAdmin):
     list_per_page = 10  # 列表每页最大显示数量，默认100
 
 
+class AmbitusAdmin(admin.ModelAdmin):
+    # 编辑界面
+    fieldsets = (
+        ("周边基本信息", {'fields': ('name', 'img', 'tabs')}),
+        ("周边位置信息", {'fields': ('lat', 'lon', 'city')})
+    )
+    # readonly_fields = (,)
+    # 显示界面
+    # fields 和 fieldsets不能共存
+    list_display = ('id', 'name', 'tabs', 'lat', 'lon', 'city')  # 列表中显示的字段
+    list_display_links = list_display  # 列表中可点击跳转的字段
+
+    search_fields = ('name', 'tabs', 'city')  # 列表搜索字段
+    list_filter = search_fields  # 列表筛选字段
+    list_per_page = 10  # 列表每页最大显示数量，默认100
+
+
+# class
+
 admin.site.register(Hotel, HotelAdmin)
 admin.site.register(Room, RoomAdmin)
 admin.site.register(HotelFaceGroup, HotelFaceGroupAdmin)
+admin.site.register(Ambitus, AmbitusAdmin)

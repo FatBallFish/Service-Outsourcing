@@ -180,7 +180,7 @@ def bytes_upload(body: bytes, key: str) -> str:
     :param bucket: Bucket 名称，由 bucketname-appid 构成
     :param body: 文件字节流
     :param key: 对象键（Key）是对象在存储桶中的唯一标识
-    :return: 返回被上传的文件的MD5值
+    :return: 返回被上传的文件的MD5值，失败直接raise错误信息
     """
     if online_check() == True:
         try:

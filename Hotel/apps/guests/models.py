@@ -38,27 +38,13 @@ class Guests(BaseModel):
 
     user_nickname.short_description = "昵称"
 
-    def user_age(self):
-        return format_html(self.info_html, self.user.age)
-
-    user_age.short_description = "年龄"
-
     def user_phone(self):
         return format_html(self.info_html, self.user.phone)
 
     user_phone.short_description = "手机号"
 
-    def user_gender(self):
-        if self.user.gender == 'male':
-            gender = "先生"
-        else:
-            gender = "女士"
-        return format_html(self.info_html, gender)
-
-    user_gender.short_description = "性别"
-
     def user_image(self):
-        return format_html('<img src="/media/{}" style="width:64px;height:auto">', self.user.image)
+        return format_html('<img src="/api/pic/get/users?name={}" style="width:64px;height:auto">', self.user.username)
 
     user_image.short_description = "用户头像"
 
@@ -117,6 +103,29 @@ class Guests(BaseModel):
     auth_date.short_description = "有效期"
 
 
+class Orders(BaseModel):
+    hotel = models.ForeignKey(verbose_name="酒店", to=Hotel, on_delete=models.CASCADE)
+    room = models.ForeignKey(verbose_name="房间", to=Room, on_delete=models.CASCADE)
+    guest = models.ForeignKey(verbose_name="预订人", to=Guests, on_delete=models.CASCADE)
+    days = models.IntegerField(verbose_name="预订天数")
+    price = models.FloatField(verbose_name="总价")
+    totalprice = models.FloatField(verbose_name="总价")
+    date_start = models.DateTimeField(verbose_name="开始时间")
+    date_end = models.DateTimeField(verbose_name="结束时间")
+    guests = models.TextField(verbose_name="住客", default="")
+    status = models.IntegerField(verbose_name="订单状态", default=0)
+    pay_time = models.DateTimeField(verbose_name="支付时间")
+
+    class Meta:
+        managed = False
+        verbose_name = "订单"
+        verbose_name_plural = verbose_name
+        db_table = "orders"
+
+    def __str__(self):
+        return "{}".format(self.id)
+
+
 class GuestRoom(models.Model):
     guest = models.ForeignKey(verbose_name="来宾", to=Guests, on_delete=models.CASCADE)
     room = models.ForeignKey(verbose_name="入住房间", to=Room, on_delete=models.CASCADE)
@@ -125,8 +134,11 @@ class GuestRoom(models.Model):
                               default="booking")
     check_in_time = models.DateTimeField(verbose_name="入住时间", default=datetime.now)
     check_out_time = models.DateTimeField(verbose_name="退房时间", blank=True, null=True)
+    order = models.ForeignKey(verbose_name="订单", to=Orders, on_delete=models.CASCADE, null=True)
+    name = models.CharField(verbose_name="标题", max_length=30)
 
     class Meta:
+        managed = False
         verbose_name = "来宾-房间"
         verbose_name_plural = verbose_name
         db_table = "guest_room"
@@ -247,7 +259,7 @@ class Visitor(BaseModel):
     user_phone.short_description = "手机号"
 
     def user_image(self):
-        return format_html('<img src="/media/{}" style="width:64px;height:auto">', self.user.image)
+        return format_html('<img src="/api/pic/get/users?name={}" style="width:64px;height:auto">', self.user.username)
 
     user_image.short_description = "用户头像"
 
@@ -315,8 +327,12 @@ class GuestVisitor(models.Model):
                               max_length=8)
     visitor_content = models.TextField(verbose_name="访客申请内容", blank=True, null=True)
     guest_content = models.TextField(verbose_name="来宾回复内容", blank=True, null=True)
+    start_time = models.DateTimeField(verbose_name="开始时间", blank=True, null=True)
+    end_time = models.DateTimeField(verbose_name="结束时间", blank=True, null=True)
+    room = models.ForeignKey(verbose_name="访问房间", to=Room, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
+        managed = False
         verbose_name = "访客申请记录"
         verbose_name_plural = verbose_name
         db_table = "guest_visitor"

@@ -23,8 +23,11 @@ from Hotel import settings
 from apps.tokens.views import TokenDokiView, PingView
 from apps.faces.views import FaceView, FaceGroupView
 from apps.users.views import UserLoginView, UserRegisterView, UserInfoView, CaptchaView, PasswordView, PortraitView
-from apps.realauth.views import RealAuthView
-from apps.devices.views import DeviceLoginView, DeviceRegisterView, DeviceHotelListView
+from apps.realauth.views import RealAuthView, DistrictView
+from apps.devices.views import DeviceLoginView, DeviceRegisterView, DeviceHotelListView, DeviceFaceFeatureView, \
+    DeviceListView
+from apps.msg.views import MsgView
+from apps.pics.views import PicView
 import os
 
 API_ROOT = settings.API_ROOT
@@ -43,7 +46,13 @@ urlpatterns = [
     path(API_ROOT + "face/group/", csrf_exempt(FaceGroupView.as_view()), name="face_group"),
     path(API_ROOT + "face/", csrf_exempt(FaceView.as_view()), name="face_register"),
     path(API_ROOT + "realauth/", csrf_exempt(RealAuthView.as_view()), name="real_auth"),
+    path(API_ROOT + "map/district/", csrf_exempt(DistrictView.as_view()), name="district"),
+    path(API_ROOT + "device/list/", csrf_exempt(DeviceListView.as_view()), name="device_list"),
     path(API_ROOT + "device/login/", csrf_exempt(DeviceLoginView.as_view()), name="device_login"),
     path(API_ROOT + "device/register/", csrf_exempt(DeviceRegisterView.as_view()), name="device_register"),
     path(API_ROOT + "device/hotel/", csrf_exempt(DeviceHotelListView.as_view()), name="device_hotel_list"),
+    path(API_ROOT + "device/feature/", csrf_exempt(DeviceFaceFeatureView.as_view()), name="device_feature"),
+    path(API_ROOT + "pic/", csrf_exempt(PicView.as_view()), name="pic"),
+    path(API_ROOT + "pic/get/<path:upload_to>/", csrf_exempt(PicView.as_view()), name="get_pic"),
+    path(API_ROOT + "msg/", csrf_exempt(MsgView.as_view()), name="msg"),
 ]
