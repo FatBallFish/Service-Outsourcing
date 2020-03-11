@@ -329,8 +329,10 @@ class FaceProcess:
 
     def reload_features(self, db: int = -1, user: Users = None) -> int:
         """
-        从先前保存的人脸数据库加载数据
-        :param filename: 保存人脸数据库的文件名
+        从先前保存的人脸数据库加载数据，db和user模式二选一
+
+        :param db: 人员库id
+        :param user: 用户信息
         :return: 加载的人脸数
         """
         # todo 更改name为ID
@@ -455,6 +457,28 @@ class FaceProcess:
         for executor in self._executors:
             executor.shutdown()
         self._arcface.release()
+
+    def face_compare(self, feature: bytes) -> tuple:
+        """
+        仅通过人脸特征进行人脸查找匹配
+
+        :param feature: 人脸特征数据
+        :return: 返回(opt_ID,max_threshold)元组，其中max_threshold仅在0.8以上才会正常返回，否则皆为0.0
+        """
+        self.reload_features(-1)
+        max_threshold = 0.0
+        opt_ID = ""
+        for ID, feature_ in self._features.items():
+            threshold = self._arcface.compare_feature(feature, feature_)
+            if max_threshold < threshold:
+                max_threshold = threshold
+                opt_ID = ID
+        if 0.8 < max_threshold:
+            _logger.debug("识别成功，与 %s 相似度 %.2f" % (opt_ID, max_threshold))
+            return opt_ID, max_threshold
+        _logger.debug("识别失败，与最像的 %s 的相似度 %.2f" % (opt_ID, max_threshold))
+        # face_info.updated_flags[0] = True
+        return "", 0.0
 
     def __enter__(self):
         return self

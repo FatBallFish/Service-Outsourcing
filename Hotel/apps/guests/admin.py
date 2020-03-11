@@ -166,8 +166,17 @@ class OrderAdmin(admin.ModelAdmin):
 
     def read_status(self, request):
         if request.status == 0:
-            color = "blue"
+            color = "red"
             status = "未支付"
+        elif request.status == 1:
+            color = "orange"
+            status = "已预订"
+        elif request.status == 2:
+            color = "blue"
+            status = "入住中"
+        elif request.status == 3:
+            color = "gray"
+            status = "已退房"
         else:
             color = "red"
             status = "其他状态"

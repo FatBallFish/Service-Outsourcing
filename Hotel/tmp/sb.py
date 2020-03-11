@@ -61,8 +61,8 @@ headers = {"content-type": "application/json"}
 
 # token = "59bc21b4e85cb1a4039802bd635294b9"  # 13750687010
 # token = "f5be3a953ffdfcb1bbe45d4379d05ade"  # 19857160634
-token = "9345de911bb295c82d0b3561d08233f9"  # 13858181317
-
+token = "f6846dfa73c22bd5265981601cd66da6"  # 13858181317 艾
+# token = "6a6f4be5aecd21636cf407cbaa8874cd"  # 13735866541 梁
 # # Doki - GET模式
 # response = requests.get("http://127.0.0.1:8848/api/user/doki/?token={}".format(token))
 # # response = requests.get("https://hotel.lcworkroom.cn/api/user/doki/?token={}".format(token))
@@ -378,14 +378,22 @@ token = "9345de911bb295c82d0b3561d08233f9"  # 13858181317
 #                          headers=headers)
 # print(response.text)
 
-# # 站内信，获取系统通知
-# data = {"id": 0, "type": "msg", "subtype": "sys", "data": {"if_new": 0}}
+# 站内信，获取系统通知
+# data = {"id": 0, "type": "msg", "subtype": "sys", "data": {"if_new": 2}}
+# response = requests.post(url="http://127.0.0.1:8848/api/msg/?token={}".format(token), data=json.dumps(data),
+#                          headers=headers)
+# print(response.text)
+
+# # 站内信，标记已读状态
+# data = {"id": 0, "type": "msg", "subtype": "sign",
+#         "data": {"msg_id": 1}}
 # response = requests.post(url="http://127.0.0.1:8848/api/msg/?token={}".format(token), data=json.dumps(data),
 #                          headers=headers)
 # print(response.text)
 
 # # 站内信，获取私聊通知
-# data = {"id": 0, "type": "msg", "subtype": "private", "data": {"if_new": 1}}
+# data = {"id": 0, "type": "msg", "subtype": "private",
+#         "data": {"if_new": 2, "people": "13750687010", "start": 0, "limit": -1}}
 # response = requests.post(url="http://127.0.0.1:8848/api/msg/?token={}".format(token), data=json.dumps(data),
 #                          headers=headers)
 # print(response.text)
@@ -396,3 +404,47 @@ token = "9345de911bb295c82d0b3561d08233f9"  # 13858181317
 # response = requests.post(url="http://127.0.0.1:8848/api/msg/?token={}".format(token), data=json.dumps(data),
 #                          headers=headers)
 # print(response.text)
+
+# # 站内信，筛选
+# data = {"id": 0, "type": "msg", "subtype": "filter",
+#         "data": {"type": "system", "subtype": "", "if_new": 1}}
+# response = requests.post(url="http://127.0.0.1:8848/api/msg/?token={}".format(token), data=json.dumps(data),
+#                          headers=headers)
+# print(response.text)
+
+# # 站内信，批量已读
+# data = {"id": 0, "type": "msg", "subtype": "sign_batch",
+#         "data": {"sys": 0}}
+# response = requests.post(url="http://127.0.0.1:8848/api/msg/?token={}".format(token), data=json.dumps(data),
+#                          headers=headers)
+# print(response.text)
+
+# # 站内信，获取私聊列表
+# data = {"id": 0, "type": "msg", "subtype": "msg_list", "data": {}}
+# response = requests.post(url="http://127.0.0.1:8848/api/msg/?token={}".format(token), data=json.dumps(data),
+#                          headers=headers)
+# print(response.text)
+
+# # 寄存柜，申请寄存柜
+# data = {"id": 0, "type": "locker", "subtype": "apply", "data": {"order_id": 4}}
+# response = requests.post(url="http://127.0.0.1:8848/api/locker/apply/?token={}".format(token), data=json.dumps(data),
+#                          headers=headers)
+# print(response.text)
+
+# # 寄存柜，取消寄存柜
+# data = {"id": 0, "type": "locker", "subtype": "cancel", "data": {"apply_id": 4}}
+# response = requests.post(url="http://127.0.0.1:8848/api/locker/apply/?token={}".format(token), data=json.dumps(data),
+#                          headers=headers)
+# print(response.text)
+
+# 寄存柜，获取寄存列表
+data = {"id": 0, "type": "locker", "subtype": "list", "data": {"order_id": 4}}
+response = requests.post(url="http://127.0.0.1:8848/api/locker/info/?token={}".format(token), data=json.dumps(data),
+                         headers=headers)
+print(response.text)
+
+# 寄存柜，获取单个寄存信息
+data = {"id": 0, "type": "locker", "subtype": "get", "data": {"apply_id": 4}}
+response = requests.post(url="http://127.0.0.1:8848/api/locker/info/?token={}".format(token), data=json.dumps(data),
+                         headers=headers)
+print(response.text)

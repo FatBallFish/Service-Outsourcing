@@ -4,7 +4,8 @@ from django.http.response import JsonResponse
 
 from apps.tokens.models import Users, Doki2
 from apps.msg.models import Messages, MessageSysStatus, MessageText
-from apps.msg.models import getNewSysMessageNum, getSysMessage, getNewPrivateNum, getPrivateMessage
+from apps.msg.models import getNewSysMessageNum, getSysMessage, getNewPrivateNum, getPrivateMessage, \
+    SignPrivateMessageBatch, SignSysMessageBatch, FilterMessage, getPrivateList
 
 import json
 
@@ -57,25 +58,49 @@ class MsgView(View):
             elif subtype == "sys":
                 if_new = 0  # 0为新消息，1为旧消息，2为新消息，错误代码默认为新消息
                 if "if_new" in data.keys():
+                    if_new = data["if_new"]
                     try:
-                        if_new = int(data["if_new"])
+                        if_new = int(if_new)
+                        if if_new not in [0, 1, 2]:
+                            if_new = 0
                     except Exception as e:
                         if_new = 0
-                if if_new not in [0, 1, 2]:
-                    if_new = 0
                 json_dict = getSysMessage(user=user, if_new=if_new, id=id)
                 print(json_dict)
                 return JsonResponse(json_dict)
             elif subtype == "private":
                 if_new = 0  # 0为新消息，1为旧消息，2为新消息，错误代码默认为新消息
+                people = ""
+                start = 0
+                limit = -1
                 if "if_new" in data.keys():
+                    if_new = data["if_new"]
                     try:
-                        if_new = int(data["if_new"])
+                        if_new = int(if_new)
+                        if if_new not in [0, 1, 2]:
+                            if_new = 0
                     except Exception as e:
                         if_new = 0
-                if if_new not in [0, 1, 2]:
-                    if_new = 0
-                json_dict = getPrivateMessage(user=user, if_new=if_new, id=id)
+                if "people" in data.keys():
+                    people = str(data["people"])
+                    if "start" in data.keys():
+                        start = data["start"]
+                        try:
+                            start = int(start)
+                        except Exception as e:
+                            start = 0
+                    if "limit" in data.keys():
+                        limit = data["limit"]
+                        try:
+                            limit = int(limit)
+                            if limit < 0:
+                                limit = -1
+                        except Exception as e:
+                            limit = -1
+                json_dict = getPrivateMessage(user=user, if_new=if_new, people=people, start=start, limit=limit, id=id)
+                return JsonResponse(json_dict)
+            elif subtype == "msg_list":
+                json_dict = getPrivateList(user=user, id=id)
                 return JsonResponse(json_dict)
             elif subtype == "send":
                 for key in ["receiver", "title", "content"]:
@@ -102,9 +127,83 @@ class MsgView(View):
                 msg.sendID = user
                 msg.recID = recID
                 msg.text = msgtext
+                msg.type = "private"
+                msg.subtype = "default"
+                msg.extra = "{}"
                 msg.status = False
                 msg.save()
                 return JsonResponse({"id": id, "status": 0, "message": "Successful", "data": {"msg_id": msg.id}})
+            elif subtype == "sign":
+                if "msg_id" not in data.keys():
+                    # status -3 错误的key
+                    return JsonResponse({"id": id, "status": -3, "message": "Error data key", "data": {}})
+                try:
+                    msg_id = int(data["msg_id"])
+                    message = Messages.objects.get(id=msg_id)
+                except Exception as e:
+                    # status 100 错误的 msg_id
+                    return JsonResponse({"id": id, "status": 100, "message": "Error msg_id", "data": {}})
+                hotel = Users.objects.get(username="hotel")
+                if message.sendID == hotel or message.sendID is None:
+                    # 系统消息
+                    defaults = {"status": True}
+                    MessageSysStatus.objects.update_or_create(defaults=defaults, message=message, recID=user)
+                else:
+                    message.status = True
+                    message.save()
+                return JsonResponse({"id": id, "status": 0, "message": "Successful", "data": {}})
+            elif subtype == "sign_batch":
+                sys = 0  # 为0表示不设为已读，1表示设为已读
+                private = 0
+                people = ""
+                status = 0
+                message = "Successful"
+                if "sys" in data.keys():
+                    sys = data["sys"]
+                    try:
+                        sys = int(sys)
+                        if sys not in [0, 1]:
+                            sys = 0
+                    except Exception as e:
+                        sys = 0
+                if "private" in data.keys():
+                    private = data["private"]
+                    try:
+                        private = int(private)
+                        if private not in [0, 1]:
+                            private = 0
+                    except Exception as e:
+                        private = 0
+                    if "people" in data.keys():
+                        people = str(data["people"])
+                        if not people.isdecimal():
+                            people = ""
+                if sys == 1 and status == 0:
+                    print("进入系统消息批量已读")
+                    status, message = SignSysMessageBatch(user=user)
+                if private == 1 and status == 0:
+                    print("进入私聊消息批量已读")
+                    status, message = SignPrivateMessageBatch(user=user, people=people)
+                return JsonResponse({"id": id, "status": status, "message": message, "data": {}})
+            elif subtype == "filter":
+                if "type" not in data.keys():
+                    # status -3 data中有非预料中的key字段
+                    return JsonResponse({"id": id, "status": -3, "message": "Error data key", "data": {}})
+                msg_type = str(data["type"])
+                msg_subtype = ""
+                if "subtype" in data.keys():
+                    msg_subtype = str(data["subtype"])
+                if_new = 0  # 0为新消息，1为旧消息，2为新消息，错误代码默认为新消息
+                if "if_new" in data.keys():
+                    try:
+                        if_new = int(data["if_new"])
+                        if if_new not in [0, 1, 2]:
+                            if_new = 0
+                    except Exception as e:
+                        if_new = 0
+                json_dict = FilterMessage(user=user, type=msg_type, subtype=msg_subtype, if_new=if_new, id=id)
+                return JsonResponse(json_dict)
+
             else:
                 # status -2 json的value错误。
                 return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})

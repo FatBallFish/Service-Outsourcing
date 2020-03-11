@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     "apps.customerserver.apps.CustomerserverConfig",
     "apps.realauth.apps.RealauthConfig",
     "apps.msg.apps.MsgConfig",
-
+    "apps.locker.apps.LockerConfig",
 ]
 
 MIDDLEWARE = [

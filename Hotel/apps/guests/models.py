@@ -108,7 +108,7 @@ class Orders(BaseModel):
     room = models.ForeignKey(verbose_name="房间", to=Room, on_delete=models.CASCADE)
     guest = models.ForeignKey(verbose_name="预订人", to=Guests, on_delete=models.CASCADE)
     days = models.IntegerField(verbose_name="预订天数")
-    price = models.FloatField(verbose_name="总价")
+    price = models.FloatField(verbose_name="单价")
     totalprice = models.FloatField(verbose_name="总价")
     date_start = models.DateTimeField(verbose_name="开始时间")
     date_end = models.DateTimeField(verbose_name="结束时间")

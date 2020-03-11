@@ -26,7 +26,7 @@ def _draw_face_info(image: np.ndarray, face_info: FaceInfo) -> dict:
     rect = face_info.rect
     # print(face_info.gender, type(face_info.gender))
     json_dict = {
-        "face_id":face_info.arc_face_info.face_id,
+        "face_id": face_info.arc_face_info.face_id,
         "ID": face_info.ID,
         "age": face_info.age,
         "threshold": float("{:.2f}".format(face_info.threshold)),
@@ -218,6 +218,18 @@ def checkFace(path: str, db: int = -1, user=None) -> dict:
 @timer(output=_logger.info)
 def reload_features(db: int = -1, user=None):
     face_process.reload_features(db=db, user=user)
+
+
+@timer(output=_logger.info)
+def face_compare(feature: bytes):
+    """
+    仅通过人脸特征进行人脸查找匹配
+
+    :param feature: 人脸特征数据
+    :return: 返回(opt_ID,max_threshold)元组，其中max_threshold仅在0.8以上才会正常返回，否则皆为0.0
+    """
+    opt_ID, max_threshold = face_process.face_compare(feature)
+    return opt_ID, max_threshold
 
 
 @timer(output=_logger.info)

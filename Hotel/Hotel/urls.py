@@ -22,12 +22,14 @@ from django.views.decorators.csrf import csrf_exempt
 from Hotel import settings
 from apps.tokens.views import TokenDokiView, PingView
 from apps.faces.views import FaceView, FaceGroupView
-from apps.users.views import UserLoginView, UserRegisterView, UserInfoView, CaptchaView, PasswordView, PortraitView
+from apps.users.views import UserLoginView, UserRegisterView, UserInfoView, CaptchaView, PasswordView, PortraitView, \
+    UserSearchView
 from apps.realauth.views import RealAuthView, DistrictView
 from apps.devices.views import DeviceLoginView, DeviceRegisterView, DeviceHotelListView, DeviceFaceFeatureView, \
     DeviceListView
 from apps.msg.views import MsgView
 from apps.pics.views import PicView
+from apps.locker.views import LockerApplyView,LockerInfoView
 import os
 
 API_ROOT = settings.API_ROOT
@@ -42,6 +44,7 @@ urlpatterns = [
     path(API_ROOT + "user/info/", csrf_exempt(UserInfoView.as_view()), name="user_info"),
     path(API_ROOT + "user/password/", csrf_exempt(PasswordView.as_view()), name="user_password"),
     path(API_ROOT + "user/portrait/", csrf_exempt(PortraitView.as_view()), name="user_portrait"),
+    path(API_ROOT + "user/search/", csrf_exempt(UserSearchView.as_view()), name="user_search"),
     path(API_ROOT + "captcha/", csrf_exempt(CaptchaView.as_view()), name="captcha"),
     path(API_ROOT + "face/group/", csrf_exempt(FaceGroupView.as_view()), name="face_group"),
     path(API_ROOT + "face/", csrf_exempt(FaceView.as_view()), name="face_register"),
@@ -55,4 +58,7 @@ urlpatterns = [
     path(API_ROOT + "pic/", csrf_exempt(PicView.as_view()), name="pic"),
     path(API_ROOT + "pic/get/<path:upload_to>/", csrf_exempt(PicView.as_view()), name="get_pic"),
     path(API_ROOT + "msg/", csrf_exempt(MsgView.as_view()), name="msg"),
+    path(API_ROOT + "locker/apply/", csrf_exempt(LockerApplyView.as_view()), name="locker_apply"),
+    path(API_ROOT + "locker/info/", csrf_exempt(LockerInfoView.as_view()), name="locker_info"),
+
 ]

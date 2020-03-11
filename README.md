@@ -624,6 +624,77 @@ Please refer to [Global Status Table](#Global Status Table)
 |  103   |      No Such Face       |   无此人脸信息   |
 |  104   |    No Such RealAuth     | 无此实名认证信息 |
 
+## User Search
+
+> **API Description**
+
+`GET`
+
+​	通过`keywords`或`user_id`值获取对应用户基本信息
+
+​	通过`token`（url参数）或`username`值（POST字段）获取对应或指定的用户信息
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/user/search/?param=`
+
+> **URL Param**
+
+|  Field   |  Type  | Length | Null | Default |                       **Description**                        |
+| :------: | :----: | :----: | :--: | :-----: | :----------------------------------------------------------: |
+| keywords | string |        |      |         | 查询关键字，可查询用户昵称与用户名<br />规则：模糊匹配用户昵称，精确匹配用户名，两者并集 |
+| user_id  | string |        |      |         |     查询用户名，精确匹配。当传递此参数时`keywords`将失效     |
+
+> **Response Success Example**
+
+```python
+{
+    "id": -1, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {
+        "num": 2, 
+        "list": [
+            {
+                "user_id": "13750687010", 
+                "nickname": "FatBallFish"
+            }, 
+            {
+                "user_id": "13858181317", 
+                "nickname": "AmiKara"
+            }
+        ]
+    }
+}
+```
+
+> **Notice**
+
++ 总想说点什么但忘词了
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": -100, 
+    "message": "Missing necessary args", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status | Method     |
+| ------ | ---------- |
+| -100   | GET / POST |
+
+> **Local Status**
+
+null
+
 ## User Password - Forget
 
 > **API Description**
@@ -2753,6 +2824,14 @@ Please refer to [Global Status Table](#Global Status Table)
 
 **站内信类**
 
+后台地址：[酒店AI后台管理系统](https://hotel.lcworkroom.cn/admin)
+
+客服账号：`server`
+
+客服密码：`hotel2020`
+
+已获得所有权限
+
 ## Msg - has_new
 
 > **API Description**
@@ -2760,6 +2839,12 @@ Please refer to [Global Status Table](#Global Status Table)
 `POST`
 
 此API用于获取用户的新消息条数，成功返回系统新站内信条数，新私聊条数和私聊条数详情
+
+这里的系统消息，是指由`hotel`用户或者空用户发出的消息，并非是指`消息type`值为`system`的消息。
+
+这里的私聊消息，是指由非系统`hotel`用户或者空用户发出的，且有指定单一的接收者的消息，并非是指`消息type`值为`private`的消息。
+
+若想获取指定消息类型的消息，请使用[Msg - filter](#Msg - filter)API接口
 
 > **URL**
 
@@ -2847,6 +2932,10 @@ Please refer to [Global Status Table](#Global Status Table)
 
 此API用于获取发给用户的所有系统站内信，并自动**按发送时间降序排序**
 
+这里的系统消息，是指由`hotel`用户或者空用户发出的消息，并非是指`消息type`值为`system`的消息。
+
+若想获取指定消息类型的消息，请使用[Msg - filter](#Msg - filter)API接口
+
 > **URL**
 
 `https://hotel.lcworkroom.cn/api/msg/?token=`
@@ -2892,10 +2981,13 @@ Please refer to [Global Status Table](#Global Status Table)
         "list": [
             {
                 "msg_id": 1, 
+                "type":"system",
+                "subtype":"notice",
                 "title": "这是一条测试通知", 
                 "content": "嗯？我就测试一下", 
                 "add_time": 1582964040.0, 
-                "status": false
+                "status": false,
+                "extra":""
             }
         ]
     }
@@ -2904,17 +2996,21 @@ Please refer to [Global Status Table](#Global Status Table)
 
 > **Response Data Param**
 
-|  Field   |  Type   |          **Description**           |
-| :------: | :-----: | :--------------------------------: |
-|  msg_id  |   int   | 此消息的消息id，保留字段，暂无用处 |
-|  title   | string  |              消息标题              |
-| content  | string  |              消息内容              |
-| add_time |  float  |          站内信发送时间戳          |
-|  status  | boolean |            消息阅读状态            |
+|  Field   |  Type   |  **Description**   |
+| :------: | :-----: | :----------------: |
+|  msg_id  |   int   |   此消息的消息id   |
+|   type   | string  |  消息类型，自定义  |
+| subtype  | string  | 消息子类型，自定义 |
+|  title   | string  |      消息标题      |
+| content  | string  |      消息内容      |
+| add_time |  float  |  站内信发送时间戳  |
+|  status  | boolean |    消息已读状态    |
+|  extra   | string  |  额外信息，自定义  |
 
 > **Notice**
-+ 消息阅读状态目前处理办法为：调用获取的api后，自动将其变为已读状态
++ 消息已读状态变更请用[Msg - sign](#Msg - sign)或者[Msg - sign_batch](#Msg - sign_batch)API
 + 不论是系统群发还是单独发送的站内信，全部规整到此api
++ **一般的系统通知我打算如此设置：`type`值为`system`,`subtype`值为`notice`。其他可自定义**
 
 > **Response Failed Example**
 
@@ -2941,7 +3037,9 @@ Please refer to [Global Status Table](#Global Status Table)
 
 > **Local Status**
 
-**null**
+| Status |        Message        |   Description    |
+| :----: | :-------------------: | :--------------: |
+|  100   | Get admin user failed | 获取系统用户失败 |
 
 ## Msg - private
 
@@ -2949,7 +3047,11 @@ Please refer to [Global Status Table](#Global Status Table)
 
 `POST`
 
-此API用于获取用户发送出去或者发送给用户的所有私聊站内信，并自动**按发送时间升序排序**
+此API用于获取用户发送出去或者发送给用户的所有私聊站内信，并自动**按发送时间降序排序**
+
+这里的私聊消息，是指由非系统`hotel`用户或者空用户发出的，且有指定单一的接收者的消息，并非是指`消息type`值为`private`的消息。
+
+若想获取指定消息类型的消息，请使用[Msg - filter](#Msg - filter)API接口
 
 > **URL**
 
@@ -2969,21 +3071,31 @@ Please refer to [Global Status Table](#Global Status Table)
     "type":"msg",
     "subtype":"private",
     "data":{
-        "if_new":2
+        "if_new":2,
+        "people": "13750687010", 
+        "start": 0, 
+        "limit": -1
     }
 }
 ```
 
 > **Data Param**
 
-| Field  | Type | Length | Null | Default |                       **Description**                        |
-| :----: | :--: | :----: | :--: | :-----: | :----------------------------------------------------------: |
-| if_new | int  |        |      |    √    | 消息过滤模式，可选值：`0`获取新消息;`1`获取已读消息;`2`获取全部消息。默认为`0` |
+| Field  |  Type  | Length | Null | Default |                       **Description**                        |
+| :----: | :----: | :----: | :--: | :-----: | :----------------------------------------------------------: |
+| if_new |  int   |        |      |    √    | 消息过滤模式，可选值：`0`获取新消息;`1`获取已读消息;`2`获取全部消息。默认为`0` |
+| people | string |        |      |    √    | 聊天对象用户名，当不传递或传递为空文本时，返回所有聊天对象的消息，默认为空文本 |
+| start  |  int   |        |      |    √    | 记录起始位置，设定后将从`start`的位置开始获取记录，初始值为`0` |
+| limit  |  int   |        |      |    √    | 记录返回条数，设定后将从`start`位置开始，返回limit条记录，若记录不足有多少返回多少。当`limit`设置为-1时，将返回从`start`开始的全部记录，默认为`-1` |
 
 > **Notice**
 
 + 当`if_new`为`0`的时候，用户发送且对方未读的消息将不返回，因为这类消息对于用户自己来说是已读消息
 + 当`if_new`不为可选值范围时，将自动判定为获取新消息
++ `people`传递的值不存在时将返回`101`错误码
++ 当`start`不传递或传递的值数据类型有误时，当做`0`处理
++ 当`limit`不传递或传递的值数据类型有误或值为负数时，当做`-1`处理
++ **`limit`与`if_new`同时存在时，将先执行`limit`再执行`if_new`，因此在使用`limit`取出指定数量消息时，建议将`if_new`设置为2，否则会出现什么问题我也没考虑清楚**
 
 > **Response Success Example**
 
@@ -3002,27 +3114,36 @@ Please refer to [Global Status Table](#Global Status Table)
                 "records": [
                     {
                         "source": 0, 
+                        "type":"private",
+                        "subtype":"default",
                         "msg_id": 2, 
                         "title": "你好", 
                         "content": "你好鸭", 
                         "add_time": 1582964040.0, 
-                        "status": false
+                        "status": false,
+                        "extra":""
                     }, 
                     {
                         "source": 0, 
+                        "type":"private",
+                        "subtype":"default",
                         "msg_id": 4, 
                         "title": "你好", 
                         "content": "你好鸭", 
                         "add_time": 1582984020.0, 
-                        "status": false
+                        "status": false,
+                        "extra":""
                     }, 
                     {
                         "source": 1, 
                         "msg_id": 5, 
+                        "type":"private",
+                        "subtype":"default",
                         "title": "回复", 
                         "content": "你也好呀！", 
                         "add_time": 1582985310.489896, 
-                        "status": false
+                        "status": false,
+                        "extra":""
                     }
                 ]
             }, 
@@ -3033,10 +3154,13 @@ Please refer to [Global Status Table](#Global Status Table)
                     {
                         "source": 0, 
                         "msg_id": 3, 
+                        "type":"private",
+                        "subtype":"default",
                         "title": "你好", 
                         "content": "你好鸭", 
                         "add_time": 1582983960.0, 
-                        "status": false
+                        "status": false,
+                        "extra":""
                     }
                 ]
             }
@@ -3060,17 +3184,431 @@ Please refer to [Global Status Table](#Global Status Table)
 | Field  | Type | **Description** |
 | :----: | :--: | :-------------: |
 | source | int  |  消息类型，可选值：`0`:其他人发来的消息；`1`:用户发送的消息  |
-|  msg_id  |   int   | 此消息的消息id，保留字段，暂无用处 |
+|  msg_id  |   int   | 此消息的消息id |
+| type | string | 消息类型，暂不可自定义，默认为`private` |
+| subtype | string | 消息子类型,暂不可自定义，默认为`default` |
 |  title   | string  |              消息标题              |
 | content  | string  |              消息内容              |
 | add_time |  float  |          站内信发送时间戳          |
-|  status  | boolean |            消息阅读状态            |
+|  status  | boolean |            消息已读状态extra            |
+| extra | string | 额外信息,暂不可自定义，默认为空文本 |
 
 > **Notice**
 
-+ 消息阅读状态目前处理办法为：调用获取的api后，自动将其变为已读状态
++ 消息已读状态变更请用[Msg - sign](#Msg - sign)或者[Msg - sign_batch](#Msg - sign_batch)API
 + 在私聊中建议使用`content`字段传递聊天内容，保留`title`的原因是打算后期做成卡片式分享时用到。
 + 私聊消息之所以用消息列表式返回格式是为了前端更方便处理，同时也是借鉴了b站与其他论坛的格式
++ **私聊消息暂不使用`type`、`subtype`和`extra`的值**
++ **默认的私聊消息`type`值为`private`，`subtype`值为`default`，`extra`为空文本**
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": -100, 
+    "message": "Missing necessary args", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -101   |
+| -100   |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+| Status |        Message        |   Description    |
+| :----: | :-------------------: | :--------------: |
+|  100   | Get admin user failed | 获取系统用户失败 |
+|  101   |   Get sender failed   |  获取发送者失败  |
+
+## Msg - msg_list
+
+> **API Description**
+
+`POST`
+
+此API用于获取用户的私聊过的聊天对象列表及最后一条消息，并自动**按最后一条消息发送时间降序排序**
+
+这里的私聊消息，是指由非系统`hotel`用户或者空用户发出的，且有指定单一的接收者的消息，并非是指`消息type`值为`private`的消息。
+
+若想获取指定消息类型的消息，请使用[Msg - filter](#Msg - filter)API接口
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/msg/?token=`
+
+> **URL Param**
+
+| Field |  Type  | Length | Null | Default | **Description** |
+| :---: | :----: | :----: | :--: | :-----: | :-------------: |
+| token | string |   32   |      |         |    用户凭证     |
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"msg",
+    "subtype":"msg_list",
+    "data":{}
+}
+```
+
+> **Data Param**
+
+**null**
+
+> **Response Success Example**
+
+```python
+{
+    "id": 0, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {
+        "num": 1, 
+        "list": [
+            {
+                "username": "13858181317", 
+                "nickname": "AmiKara", 
+                "msg_id": 7, 
+                "status": false, 
+                "add_time": 1583053260.0, 
+                "title": "这是一条测试通知", 
+                "content": "嗯？我就测试一下", 
+                "type": "private", 
+                "subtype": "default", 
+                "extra": ""
+            }
+        ]
+    }
+}
+```
+
+> **Response Data Param**
+
+|  Field   |  Type   |  **Description**   |
+| :------: | :-----: | :----------------: |
+| username | string  |       用户名       |
+| nickname | string  |      用户昵称      |
+|  msg_id  |   int   |   此消息的消息id   |
+|   type   | string  |  消息类型，自定义  |
+| subtype  | string  | 消息子类型，自定义 |
+|  title   | string  |      消息标题      |
+| content  | string  |      消息内容      |
+| add_time |  float  |  站内信发送时间戳  |
+|  status  | boolean |    消息已读状态    |
+|  extra   | string  |  额外信息，自定义  |
+
+> **Notice**
+
++ `list`列表已按照最后回复时间降序排序，最后回复包括用户发送给聊天对象的时间
++ **修改了list内部数据结构，新增与聊天对象的最后一条消息信息**
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": -100, 
+    "message": "Missing necessary args", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -101   |
+| -100   |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+| Status |        Message        |   Description    |
+| :----: | :-------------------: | :--------------: |
+|  100   | Get admin user failed | 获取系统用户失败 |
+
+## Msg - sign
+
+> **API Description**
+
+`POST`
+
+此API用于标记**站内信**为已读状态，不论系统站内信还是私聊站内信。
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/msg/?token=`
+
+
+> **URL Param**
+
+| Field |  Type  | Length | Null | Default | **Description** |
+| :---: | :----: | :----: | :--: | :-----: | :-------------: |
+| token | string |   32   |      |         |    用户凭证     |
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"msg",
+    "subtype":"sign",
+    "data":{
+        "msg_id":1
+    }
+}
+```
+
+> **Data Param**
+
+| Field  | Type | Length | Null | Default | **Description** |
+| :----: | :--: | :----: | :--: | :-----: | :-------------: |
+| msg_id | int  |        |      |         |     消息id      |
+
+> **Notice**
+
++ 当`msg_id`数据类型错误或不存在时，返回`100`状态码
+
+> **Response Success Example**
+
+```python
+{
+    "id": 0, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {}
+}
+```
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": -100, 
+    "message": "Missing necessary args", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -101   |
+| -100   |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+| Status |   Message    | Description  |
+| :----: | :----------: | :----------: |
+|  100   | Error msg_id | 错误的消息id |
+
+## Msg - sign_batch
+
+> **API Description**
+
+`POST`
+
+此API用于批量标记**站内信**为已读状态，不论系统站内信还是私聊站内信。
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/msg/?token=`
+
+
+> **URL Param**
+
+| Field |  Type  | Length | Null | Default | **Description** |
+| :---: | :----: | :----: | :--: | :-----: | :-------------: |
+| token | string |   32   |      |         |    用户凭证     |
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"msg",
+    "subtype":"sign_batch",
+    "data":{
+        "sys":0,
+        "private":1,
+        "people":"13750687010"
+    }
+}
+```
+
+> **Data Param**
+
+|  Field  |  Type  | Length | Null | Default |                       **Description**                        |
+| :-----: | :----: | :----: | :--: | :-----: | :----------------------------------------------------------: |
+|   sys   |  int   |        |      |    √    |  是否标记系统消息为已读：`0`为不标记，`1`为标记，默认为`0`   |
+| private |  int   |        |      |    √    |  是否标记私聊消息为已读：`0`为不标记，`1`为标记，默认为`0`   |
+| people  | string |        |      |    √    | 聊天对象id，仅在`private`设置时有效，设置后将仅标记与该聊天对象的未读消息为已读消息；不设置或设置为空文本表示标记所有未读私聊信息。 |
+
+> **Notice**
+
++ 当`sys`数据类型错误或不存在时，默认使用`0`
++ 当`private`数据类型错误或不存在时，默认使用`0`
++ 当`people`数据类型错误或不存在时，默认使用空文本
++ 当同时标记系统消息与私聊消息时，若在标记系统消息过程中出现错误，将直接返回错误信息，不执行私聊消息的标记。
++ 私聊消息的标记仅针对于自身为接收者的未读信息，自己为发送者且对方未读的消息不会被标记
+
+> **Response Success Example**
+
+```python
+{
+    "id": 0, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {}
+}
+```
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": -100, 
+    "message": "Missing necessary args", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -101   |
+| -100   |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+| Status |        Message         |      Description       |
+| :----: | :--------------------: | :--------------------: |
+|  100   | Get system user failed |    获取系统用户失败    |
+|  101   |   Get sender Failed    | 获取私聊发送者对象失败 |
+
+## Msg - filter
+
+> **API Description**
+
+`POST`
+
+此API用于通过`msg_type`、`msg_subtype`和`if_new`值进行筛选**用户收到的所有站内信消息**，并自动**按发送时间降序排序**
+
+通过此接口获取的私聊消息结构会非常混乱，不建议私聊消息使用此API
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/msg/?token=`
+
+> **URL Param**
+
+| Field |  Type  | Length | Null | Default | **Description** |
+| :---: | :----: | :----: | :--: | :-----: | :-------------: |
+| token | string |   32   |      |         |    用户凭证     |
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"msg",
+    "subtype":"filter",
+    "data":{
+        "type": "system", 
+        "subtype": "", 
+        "if_new": 1
+    }
+}
+```
+
+> **Data Param**
+
+|  Field  |  Type  | Length | Null | Default |                       **Description**                        |
+| :-----: | :----: | :----: | :--: | :-----: | :----------------------------------------------------------: |
+|  type   | string |        |      |         |                           消息类型                           |
+| subtype | string |        |      |    √    |  消息子类型，不传递或者传递空文本表示筛选`type`下所有的消息  |
+| if_new  |  int   |        |      |    √    | 消息过滤模式，可选值：`0`获取新消息;`1`获取已读消息;`2`获取全部消息。默认为`0` |
+
+> **Notice**
+
++ `type`值不可为空，否则可能发生不可知错误（没测试过）
++ 当`if_new`数据类型错误或不存在时，默认使用`0`，自动判定为获取新消息
++ `type`与`subtype`、`if_new`三者为交集检索条件
+
+> **Response Success Example**
+
+```python
+{
+    "id": 0, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {
+        "num": 1, 
+        "list": [
+            {
+                "msg_id": 1, 
+                "type":"system",
+                "subtype":"notice",
+                "title": "这是一条测试通知", 
+                "content": "嗯？我就测试一下", 
+                "add_time": 1582964040.0, 
+                "status": false,
+                "extra":""
+            }
+        ]
+    }
+}
+```
+
+> **Response Data Param**
+
+|  Field   |  Type   |          **Description**           |
+| :------: | :-----: | :--------------------------------: |
+|  msg_id  |   int   | 此消息的消息id，保留字段，暂无用处 |
+|   type   | string  |              消息类型              |
+| subtype  | string  |             消息子类型             |
+|  title   | string  |              消息标题              |
+| content  | string  |              消息内容              |
+| add_time |  float  |          站内信发送时间戳          |
+|  status  | boolean |            消息已读状态            |
+|  extra   | string  |              额外信息              |
+
+> **Notice**
+
++ 消息已读状态变更请用[Msg - sign](#Msg - sign)或者[Msg - sign_batch](#Msg - sign_batch)API
++ 不论是系统群发还是单独发送的站内信，全部规整到此api
++ 用此API获取的私聊消息返回结构非常混乱，不建议私聊消息使用此API
 
 > **Response Failed Example**
 
@@ -3144,6 +3682,8 @@ Please refer to [Global Status Table](#Global Status Table)
 
 + 在私聊中建议使用`content`字段传递聊天内容，`title`字段一般情况建议为空文本。
 + 保留`title`的原因是打算后期做成卡片式分享时用到。
++ **在私聊消息中，暂不支持自定义`type`、`subtype`和`extra`字段**
++ **默认的私聊消息`type`值为`private`，`subtype`值为`default`，`extra`为空文本**
 
 > **Response Success Example**
 
@@ -3197,6 +3737,488 @@ Please refer to [Global Status Table](#Global Status Table)
 | :----: | :-----------------------: | :--------------: |
 |  100   |      Error receiver       |   错误的接收者   |
 |  101   | Create MessageText Failed | 创建消息内容失败 |
+
+# Locker类
+
+寄存柜类
+
+## Locker - apply
+
+> **API Description**
+
+`POST`
+
+此API用于预约酒店寄存柜，成功返回相关信息，并自动发送一条系统消息给用户
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/locker/apply/?token=`
+
+> **URL Param**
+
+| Field |  Type  | Length | Null | Default | **Description** |
+| :---: | :----: | :----: | :--: | :-----: | :-------------: |
+| token | string |   32   |      |         |    用户凭证     |
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"locker",
+    "subtype":"apply",
+    "data":{
+        "order_id":4
+    }
+}
+```
+
+> **Data Param**
+
+|  Field   | Type | Length | Null | Default | **Description** |
+| :------: | :--: | :----: | :--: | :-----: | :-------------: |
+| order_id | int  |        |      |         |     订单id      |
+
+> **Notice**
+
++ API通过订单，随机为用户分配订单对应酒店的寄存柜
++ 同一订单里用户只能拥有一个正在进行中的预约信息，且只能由订单中的`guest`申请
++ 若订单状态不对，返回`101`状态码。（状态不对指非预约中和入住中的其他状态）
++ 若操作用户与订单对应用户不一致，返回`300`状态码
++ 预约只能在入住时间前6h和入住时间后3h可进行预约，其他时间预约返回`102`错误码
+
+> **Response Success Example**
+
+```python
+{
+    "id": 0, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {
+        "apply_id": 3, 
+        "status": "applying", 
+        "locker_id": 1, 
+        "index": 1, 
+        "num": 1, 
+        "expire_time": 1583852400.0}}
+
+```
+
+> **Response Data Param**
+
+|    Field    |  Type  |                       **Description**                        |
+| :---------: | :----: | :----------------------------------------------------------: |
+|  apply_id   |  int   |                       寄存柜预约信息id                       |
+|   status    | string | 寄存柜预约状态，可选值：<br />`applying`:预约中<br />`using`:使用中<br />`canceled`:被取消<br />`done`:使用完毕 |
+|  locker_id  |  int   |                           寄存柜id                           |
+|    index    |  int   |            寄存柜单元序列，通俗讲就是第`index`柜             |
+|     num     |  int   |                 编号，通俗点将就是第`num`号                  |
+| expire_time | float  |           过期时间时间戳，过期后预约信息自动被取消           |
+
+> **Notice**
+
++ `index`和`num`字段一般连用，组成：`index`柜`num`号 的形式，这么设置的目的是为了适应多台寄存柜的场景
+
++ 寄存柜为随机分配，不可自主选择，若寄存柜已满返回`200`状态码
+
++ 寄存柜预约成功后会自动发送一条站内信，消息为系统单发消息，其中：
+
+  + `type`值为`locker`
+
+  + `subtype`值为`apply`
+
+  + `title`值为`预约寄存柜成功`，
+
+  + `content`值为`您成功预约了{酒店名称}的寄存柜，以下是详细信息,请注意过期时间，过时自动取消`
+
+  + ``extra`为文本型的json数据，需自行二次解析，详细字段见下。
+
+  + |    Field    |  Type  |                         Description                          |
+    | :---------: | :----: | :----------------------------------------------------------: |
+    |  hotel_id   |  int   |                       寄存柜所在酒店id                       |
+    | hotel_name  | string |                      寄存柜所在酒店名称                      |
+    |  apply_id   |  int   |                       寄存柜预约信息id                       |
+    |   status    | string | 寄存柜预约状态，可选值：<br />`applying`:预约中<br />`using`:使用中<br />`canceled`:被取消<br />`done`:使用完毕 |
+    |  locker_id  |  int   |                           寄存柜id                           |
+    |    index    |  int   |            寄存柜单元序列，通俗讲就是第`index`柜             |
+    |     num     |  int   |                 编号，通俗点将就是第`num`号                  |
+    | expire_time | float  |           过期时间时间戳，过期后预约信息自动被取消           |
+
+  + `extra`字段的想法是用来给卡片样式通知提供的字段
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": -100, 
+    "message": "Missing necessary args", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -101   |
+| -100   |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+| Status |         Message          |                      Description                      |
+| :----: | :----------------------: | :---------------------------------------------------: |
+|  100   |      Error order_id      |                     错误的订单id                      |
+|  101   |    Error order status    |       错误的订单状态(指非预约中或入住中的状态)        |
+|  102   |     Error apply time     | 错误的预约时间（需在 入住时间-6h 与入住时间+3h 之间） |
+|  103   | Already had application  |    已有未完成的预约或使用记录（指预约中与使用中）     |
+|  200   |   No available locker    |       该酒店无可用寄存柜（已满或未设立寄存柜）        |
+|  300   |      User mismatch       |               用户与订单的预订人不一致                |
+|  301   | User don't has face data |                    用户无人脸数据                     |
+
+## Locker - cancel
+
+> **API Description**
+
+`POST`
+
+此API用于取消已预约的酒店寄存柜，取消成功后将自动发送一条系统消息给用户
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/locker/apply/?token=`
+
+> **URL Param**
+
+| Field |  Type  | Length | Null | Default | **Description** |
+| :---: | :----: | :----: | :--: | :-----: | :-------------: |
+| token | string |   32   |      |         |    用户凭证     |
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"locker",
+    "subtype":"cancel",
+    "data":{
+        "apply_id":3
+    }
+}
+```
+
+> **Data Param**
+
+|  Field   | Type | Length | Null | Default | **Description**  |
+| :------: | :--: | :----: | :--: | :-----: | :--------------: |
+| apply_id | int  |        |      |         | 寄存柜预约信息id |
+
+> **Notice**
+
++ `order_id`不存在返回`100`错误码
+
++ 只能取消处于预约中的寄存柜预约，否则返回`101`返回码
+
++ 若操作用户非预约者，返回`300`返回码，防止恶意取消他人预约信息
+
++ 预约超过入住时间3h后将自动取消。**（目前还没做自动取消机制，太耗性能没想好怎么弄，后期会增加）**
+
++ 寄存柜取消预约成功后会自动发送一条站内信，消息为系统单发消息，其中：
+
+  + `type`值为`locker`
+
+  + `subtype`值为`cancel`
+
+  + `title`值为`取消寄存柜成功`，
+
+  + `content`值为`您已成功取消预约{酒店名称}的寄存柜，以下是详细信息`
+
+  + ``extra`为文本型的json数据，需自行二次解析，详细字段见下。
+
+  + |    Field    |  Type  |                         Description                          |
+    | :---------: | :----: | :----------------------------------------------------------: |
+    |  hotel_id   |  int   |                       寄存柜所在酒店id                       |
+    | hotel_name  | string |                      寄存柜所在酒店名称                      |
+    |  apply_id   |  int   |                       寄存柜预约信息id                       |
+    |   status    | string | 寄存柜预约状态，可选值：<br />`applying`:预约中<br />`using`:使用中<br />`canceled`:被取消<br />`done`:使用完毕 |
+    |  locker_id  |  int   |                           寄存柜id                           |
+    |    index    |  int   |            寄存柜单元序列，通俗讲就是第`index`柜             |
+    |     num     |  int   |                 编号，通俗点将就是第`num`号                  |
+    | expire_time | float  |           过期时间时间戳，过期后预约信息自动被取消           |
+
+  + `extra`字段的想法是用来给卡片样式通知提供的字段
+
+> **Response Success Example**
+
+```python
+{
+    "id": 0, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {}
+
+```
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": -100, 
+    "message": "Missing necessary args", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -101   |
+| -100   |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+| Status |                  Message                  |       Description        |
+| :----: | :---------------------------------------: | :----------------------: |
+|  100   |              Error apply_id               |     错误的预约信息id     |
+|  101   | Only with applying status can be canceled | 只有预约状态下可取消预约 |
+|  300   |               User mismatch               |    用户与预约者不一致    |
+
+## Locker - list
+
+> **API Description**
+
+`POST`
+
+此API用于获取用户订单对应的寄存柜预约消息列表，之所以为列表是因为用户可能会有取消预约并重新预约的情况，如此会产生多条记录。成功返回相关信息
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/locker/info/?token=`
+
+> **URL Param**
+
+| Field |  Type  | Length | Null | Default | **Description** |
+| :---: | :----: | :----: | :--: | :-----: | :-------------: |
+| token | string |   32   |      |         |    用户凭证     |
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"locker",
+    "subtype":"list",
+    "data":{
+        "order_id":4
+        "status":"applying"
+    }
+}
+```
+
+> **Data Param**
+
+|  Field   |  Type  | Length | Null | Default |                       **Description**                        |
+| :------: | :----: | :----: | :--: | :-----: | :----------------------------------------------------------: |
+| order_id |  int   |        |      |         |                            订单id                            |
+|  status  | string |        |      |    √    | 寄存柜预约状态，可选值：<br />`applying`:预约中<br />`using`:使用中<br />`canceled`:被取消<br />`done`:使用完毕 |
+
+> **Notice**
+
++ `order_id`错误返回`100`错误码
++ 不传递`status`字段时，默认返回全部预约消息，若传递了以上四个值之一，可进行状态筛选，不可传递多个值，若传递的值有误则自动返回全部预约消息。
+
+> **Response Success Example**
+
+```python
+{
+    "id": 0, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {
+        "num": 2, 
+        "list": [
+            {
+                "apply_id": 3, 
+                "status": "applying", 
+                "locker_id": 1, 
+                "index": 1, 
+                "num": 1, 
+                "expire_time": 1583852400.0
+            }, 
+            {
+                "apply_id": 4, 
+                "status": 
+                "canceled", 
+                "locker_id": 2, 
+                "index": 1, 
+                "num": 2, 
+                "expire_time": 1583852400.0
+            }
+        ]
+    }
+}
+```
+
+> **Response Data Param**
+
+|    Field    |  Type  |                       **Description**                        |
+| :---------: | :----: | :----------------------------------------------------------: |
+|  apply_id   |  int   |                       寄存柜预约信息id                       |
+|   status    | string | 寄存柜预约状态，可选值：<br />`applying`:预约中<br />`using`:使用中<br />`canceled`:被取消<br />`done`:使用完毕 |
+|  locker_id  |  int   |                           寄存柜id                           |
+|    index    |  int   |            寄存柜单元序列，通俗讲就是第`index`柜             |
+|     num     |  int   |                 编号，通俗点将就是第`num`号                  |
+| expire_time | float  |           过期时间时间戳，过期后预约信息自动被取消           |
+
+> **Notice**
+
++ `index`和`num`字段一般连用，组成：`index`柜`num`号 的形式，这么设置的目的是为了适应多台寄存柜的场景
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": -100, 
+    "message": "Missing necessary args", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -101   |
+| -100   |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+| Status |    Message     |       Description        |
+| :----: | :------------: | :----------------------: |
+|  100   | Error order_id |       错误的订单id       |
+|  300   | User mismatch  | 用户与订单的预订人不一致 |
+
+## Locker - get
+
+> **API Description**
+
+`POST`
+
+此API用于通过`apply_id`获取用户单条寄存柜预约消息。成功返回相关信息
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/locker/info/?token=`
+
+> **URL Param**
+
+| Field |  Type  | Length | Null | Default | **Description** |
+| :---: | :----: | :----: | :--: | :-----: | :-------------: |
+| token | string |   32   |      |         |    用户凭证     |
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"locker",
+    "subtype":"get",
+    "data":{
+        "apply_id":4
+    }
+}
+```
+
+> **Data Param**
+
+|  Field   | Type | Length | Null | Default | **Description**  |
+| :------: | :--: | :----: | :--: | :-----: | :--------------: |
+| apply_id | int  |        |      |         | 寄存柜预约消息id |
+
+> **Notice**
+
++ `apply_id`错误返回`100`错误码
+
+> **Response Success Example**
+
+```python
+{
+    "id": 0, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {
+        "apply_id": 4, 
+        "status": "canceled", 
+        "locker_id": 2, 
+        "index": 1, 
+        "num": 2, 
+        "expire_time": 1583852400.0
+    }
+}
+```
+
+> **Response Data Param**
+
+|    Field    |  Type  |                       **Description**                        |
+| :---------: | :----: | :----------------------------------------------------------: |
+|  apply_id   |  int   |                       寄存柜预约信息id                       |
+|   status    | string | 寄存柜预约状态，可选值：<br />`applying`:预约中<br />`using`:使用中<br />`canceled`:被取消<br />`done`:使用完毕 |
+|  locker_id  |  int   |                           寄存柜id                           |
+|    index    |  int   |            寄存柜单元序列，通俗讲就是第`index`柜             |
+|     num     |  int   |                 编号，通俗点将就是第`num`号                  |
+| expire_time | float  |           过期时间时间戳，过期后预约信息自动被取消           |
+
+> **Notice**
+
++ `index`和`num`字段一般连用，组成：`index`柜`num`号 的形式，这么设置的目的是为了适应多台寄存柜的场景
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": -100, 
+    "message": "Missing necessary args", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -101   |
+| -100   |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+| Status |    Message     |    Description     |
+| :----: | :------------: | :----------------: |
+|  100   | Error order_id |    错误的订单id    |
+|  300   | User mismatch  | 用户与预约者不一致 |
 
 # 硬件终端接口暂不写说明文档
 

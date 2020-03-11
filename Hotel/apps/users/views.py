@@ -3,6 +3,7 @@ from django.views.generic.base import View
 from django.http import JsonResponse, HttpResponse
 from django.http import HttpResponseRedirect
 from django.contrib.auth import authenticate
+from django.db.models import Q
 from Hotel import settings
 
 from apps.users.models import Users
@@ -530,6 +531,38 @@ class UserInfoView(View):
         else:
             # status -2 json的value错误。
             return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
+
+
+class UserSearchView(View):
+    def get(self, request, *args, **kwargs):
+        try:
+            param_dict = request.GET
+            print(param_dict)
+        except Exception as e:
+            print(e)
+            print("Missing necessary args")
+            # log_main.error("Missing necessary agrs")
+            # status -100 缺少必要的参数
+            return JsonResponse({"id": -1, "status": -100, "message": "Missing necessary args", "data": {}})
+        data_list = []
+        if "user_id" in param_dict:
+            user_id = str(param_dict["user_id"])
+            try:
+                user = Users.objects.get(username=user_id)
+            except Exception as e:
+                return JsonResponse(
+                    {"id": -1, "status": 0, "message": "Successful",
+                     "data": {"num": len(data_list), "list": data_list}})
+            data_dict = {"user_id": user.username, "nickname": user.nickname}
+            data_list.append(data_dict)
+        elif "keywords" in param_dict:
+            keywords = str(param_dict["keywords"])
+            user_list = Users.objects.filter(Q(nickname__contains=keywords) | Q(username=keywords))
+            for user in user_list:
+                data_dict = {"user_id": user.username, "nickname": user.nickname}
+                data_list.append(data_dict)
+        return JsonResponse(
+            {"id": -1, "status": 0, "message": "Successful", "data": {"num": len(data_list), "list": data_list}})
 
 
 class PasswordView(View):

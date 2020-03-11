@@ -67,17 +67,17 @@ class HotelFaceGroup(BaseModel):
     hotel_lat.short_description = "纬度"
 
     def group_id(self):
-        return format_html(self.info_html, self.face_group.group_id)
+        return format_html(self.info_html, self.face_group.id)
 
     group_id.short_description = "人员库id"
 
     def group_name(self):
-        return format_html(self.info_html, self.face_group.group_name)
+        return format_html(self.info_html, self.face_group.name)
 
     group_name.short_description = "人员库名称"
 
     def group_content(self):
-        return format_html(self.info_html, self.face_group.group_content)
+        return format_html(self.info_html, self.face_group.content)
 
     group_content.short_description = "人员库描述"
 

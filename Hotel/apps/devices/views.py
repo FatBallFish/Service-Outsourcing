@@ -8,10 +8,14 @@ from django.db.models import Q
 from apps.faces.models import FaceGroup, FaceData
 from apps.devices.models import Device, DeviceDoki, DeviceGroup
 from apps.rooms.models import Hotel, HotelFaceGroup
+from apps.users.models import Users
+from apps.locker.models import LockerOrder, Locker
+from apps.guests.models import Orders
 
+from extral_apps.m_arcface import main as Arcface
 from extral_apps import MD5
 
-import json
+import json, base64
 
 
 # Create your views here.
@@ -355,3 +359,64 @@ class DeviceFaceFeatureView(View):
         else:
             # status -2 json的value错误。
             return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
+
+
+class DeviceLockerView(View):
+    def post(self, request, *args, **kwargs):
+        try:
+            device_id = request.GET.get("device_id")
+            print("device_id:", device_id)
+        except Exception as e:
+            print(e)
+            print("Missing necessary args")
+            # log_main.error("Missing necessary agrs")
+            # status -100 缺少必要的参数
+            return JsonResponse({"id": -1, "status": -100, "message": "Missing necessary args", "data": {}})
+        result, device = DeviceDoki(device_id=device_id)
+        if result is False:
+            return JsonResponse({"id": -1, "status": -104, "message": "Error device_id token", "data": {}})
+        try:
+            data = dict(json.loads(request.body))
+            print(data)
+        except Exception as e:
+            json_dict = {"id": -1, "status": -1, "message": "Error JSON key", "data": {}}
+            return JsonResponse(json_dict)
+        if "id" in data.keys():
+            id = data["id"]
+        else:
+            id = -1
+            # 判断指定所需字段是否存在，若不存在返回status -1 json。
+        for key in ["type", "subtype", "data"]:
+            if key not in data.keys():
+                # status -1 json的key错误。
+                json_dict = {"id": id, "status": -1, "message": "Error JSON key", "data": {}}
+                return JsonResponse(json_dict)
+        type = data["type"]
+        subtype = data["subtype"]
+        data = dict(data["data"])
+        if type == "locker":
+            if subtype == "verify":
+                if "feature" not in data.keys():
+                    # status -3 json的value错误。
+                    return JsonResponse({"id": id, "status": -3, "message": "Error data key", "data": {}})
+                feature_b64 = data["feature"]
+                feature = base64.b64decode(feature_b64)
+                ID, threshold = Arcface.face_compare(feature=feature)
+                if threshold == 0:
+                    # status 100 未匹配相关人脸
+                    return JsonResponse({"id": id, "status": 100, "message": "Not matching face data", "data": {}})
+                # todo do device api
+                try:
+                    face = FaceData.objects.get(ID=ID)
+                except Exception as e:
+                    # status 101 错误的face_id
+                    return JsonResponse({"id": id, "status": 101, "message": "Error face id", "data": {}})
+                try:
+                    user = Users.objects.get(face=face)
+                except Exception as e:
+                    # status 102 该人脸未绑定用户账号
+                    return JsonResponse({"id": id, "status": 102, "message": "The face data not bind user", "data": {}})
+                hotel = device.hotel
+                condition = Q()
+                order_list = Orders
+                locker_order = LockerOrder.objects.filter(locker__hotel=hotel)
