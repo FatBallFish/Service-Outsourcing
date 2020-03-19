@@ -2026,7 +2026,7 @@ Please refer to [Global Status Table](#Global Status Table)
 
 null
 
-## Face - Register
+## Face - Register（新修改）
 
 > **API Description**
 
@@ -2040,7 +2040,13 @@ null
 
 **修改**
 
-2020年2月2日00:03:20
+**2020年3月12日21:04:08**
+
+新增`104`状态码，出现条件为人脸上有遮罩物，例如口罩；
+
+补充了`-101`和`-100`全局错误返回码，功能里已存在，只是忘记写进文档中
+
+**2020年2月2日00:03:20**
 
 新增注册时人脸个数判断，详情看api的局部返回值
 
@@ -2117,6 +2123,8 @@ Please refer to [Global Status Table](#Global Status Table)
 
 | Status |
 | ------ |
+| -101   |
+| -100   |
 | -3     |
 | -2     |
 | -1     |
@@ -2129,8 +2137,9 @@ Please refer to [Global Status Table](#Global Status Table)
 |  101   |     Register face failed     |  注册人员数据失败  |
 |  102   |    No face data in base64    |  图片中无人脸数据  |
 |  103   | Too much face data in base64 | 图片中人脸数据过多 |
+|  104   |     No mask on the face      |  脸部不能有遮罩物  |
 
-## Face - Find
+## Face - Find（新修改）
 
 > **API Description**
 
@@ -2144,7 +2153,13 @@ Please refer to [Global Status Table](#Global Status Table)
 
 **修改**
 
-2020年2月2日00:05:55
+**2020年3月12日21:03:06**
+
+在完整数据返回的部分新增`mask`字段，用来判断人脸是否有脸部遮罩物
+
+补充了`-101`和`-100`全局错误返回码，功能里已存在，只是忘记写进文档中
+
+**2020年2月2日00:05:55**
 
 新增人脸数的判断，修复只能识别一张人脸的情况
 
@@ -2240,24 +2255,26 @@ Please refer to [Global Status Table](#Global Status Table)
 >
 > **1 完全返回**
 
-|    Field     |    Type    | Length | Null | Default |               **Description**               |
-| :----------: | :--------: | :----: | :--: | :-----: | :-----------------------------------------: |
-|      ID      |   string   |   18   |      |         |  人脸数据id（身份证号），若没找到默认为""   |
-|     name     |   string   |        |      |    √    |         人脸姓名，若没找到默认为""          |
-|     age      |    int     |        |      |         |       人脸预测年龄（非人脸真实年龄）        |
-|   liveness   |  boolean   |        |      |         | 活体检测，`true`为真人，`false`为照片等假人 |
-|  threshold   |   float    |        |      |         |       人脸相似度，若没找到默认为0.00        |
-|    gender    |   string   |        |      |         | 用户性别，仅两种选择：`male`男，`female`女  |
-|   top_left   | tuple/list |        |      |         |           人脸出现位置左上角坐标            |
-|  top_right   | tuple/list |        |      |         |           人脸出现位置右上角坐标            |
-| bottom_left  | tuple/list |        |      |         |           人脸出现位置左下角坐标            |
-| bottom_right | tuple/list |        |      |         |           人脸出现位置右下角坐标            |
+|    Field     |    Type    | Length | Null | Default |                   **Description**                   |
+| :----------: | :--------: | :----: | :--: | :-----: | :-------------------------------------------------: |
+|      ID      |   string   |   18   |      |         |      人脸数据id（身份证号），若没找到默认为""       |
+|     name     |   string   |        |      |    √    |             人脸姓名，若没找到默认为""              |
+|     age      |    int     |        |      |         |           人脸预测年龄（非人脸真实年龄）            |
+|   liveness   |  boolean   |        |      |         |     活体检测，`true`为真人，`false`为照片等假人     |
+|  threshold   |   float    |        |      |         |           人脸相似度，若没找到默认为0.00            |
+|    gender    |   string   |        |      |         |     用户性别，仅两种选择：`male`男，`female`女      |
+|   top_left   | tuple/list |        |      |         |               人脸出现位置左上角坐标                |
+|  top_right   | tuple/list |        |      |         |               人脸出现位置右上角坐标                |
+| bottom_left  | tuple/list |        |      |         |               人脸出现位置左下角坐标                |
+| bottom_right | tuple/list |        |      |         |               人脸出现位置右下角坐标                |
+|     mask     |  boolean   |        |      |         | **新增字段**，脸部是否有遮罩物，true为有，false为无 |
 
 > **Notice**
 
 1. 完全返回中有很多私密信息，请慎用！
 2. 若人员库中未找到此人信息，仍然会返回人脸数据信息，但`ID`,`name`将为空字符串，`threshold`为`0.00`，`liveness`仍然有效
 3. `threshold`精确到小数点后两位，最高为`1(完全匹配)`，最低为`0(匹配失败时将会返回)`，一般匹配程度超过0.8才算匹配成功返回匹配值，否则一律返回`0.00`
+4. **mask字段为新增检测信息，若识别失败此字段会返回null值**
 
 > **Example**
 
@@ -2275,7 +2292,8 @@ Please refer to [Global Status Table](#Global Status Table)
             "top_right": [157, 94], 
             "bottom_left": [61, 189], 
             "bottom_right": [157, 189], 
-            "name": ""
+            "name": "",
+            "mask": true
         }, 
         {
             "ID": "", 
@@ -2287,7 +2305,8 @@ Please refer to [Global Status Table](#Global Status Table)
             "top_right": [308, 60], 
             "bottom_left": [209, 159], 
             "bottom_right": [308, 159], 
-            "name": ""
+            "name": "",
+            "mask":false
         }
     ]
 }
@@ -2330,6 +2349,8 @@ Please refer to [Global Status Table](#Global Status Table)
 
 | Status |
 | ------ |
+| -101   |
+| -100   |
 | -3     |
 | -2     |
 | -1     |
@@ -2340,7 +2361,7 @@ Please refer to [Global Status Table](#Global Status Table)
 | :----: | :--------------------: | :--------------: |
 |  100   | No face data in base64 | 图片中无人脸信息 |
 
-## Face - Verify
+## Face - Verify（新修改）
 
 > **API Description**
 
@@ -2354,7 +2375,13 @@ Please refer to [Global Status Table](#Global Status Table)
 
 **修改**
 
-2020年2月2日00:22:20
+**2020年3月12日21:05:08**
+
+在完整数据返回的部分新增`mask`字段，用来判断人脸是否有脸部遮罩物
+
+补充了`-101`和`-100`全局错误返回码，功能里已存在，只是忘记写进文档中
+
+**2020年2月2日00:22:20**
 
 新增多张人脸时返回`102`状态码
 
@@ -2410,6 +2437,7 @@ Please refer to [Global Status Table](#Global Status Table)
 1. 若人员库中未找到此人信息，`result`为`false`，`threshold`为`0.00`，`liveness`仍然有效
 2. `result`为真时并不表示通过验证，请结合`liveness`字段进行判断
 3. `threshold`精确到小数点后两位，最高为`1(完全匹配)`，最低为`0(匹配失败时将会返回)`，一般匹配程度超过0.8才算匹配成功返回匹配值，否则一律返回`0.00`
+4. **mask字段为新增检测信息，若识别失败此字段会返回null值**
 
 > **Example**
 
@@ -2427,18 +2455,19 @@ Please refer to [Global Status Table](#Global Status Table)
 >
 > **1 完全返回**
 
-|    Field     |    Type    | Length | Null | Default |                **Description**                |
-| :----------: | :--------: | :----: | :--: | :-----: | :-------------------------------------------: |
-|    result    |  boolean   |        |      |         | 匹配结果，`true`为匹配成功，`false`为匹配失败 |
-|      ID      |   string   |   18   |      |         |   人脸数据id（身份证号），若没找到默认为""    |
-|     age      |    int     |        |      |         |        人脸预测年龄（非人脸真实年龄）         |
-|   liveness   |  boolean   |        |      |         |  活体检测，`true`为真人，`false`为照片等假人  |
-|  threshold   |   float    |        |      |         |        人脸相似度，若没找到默认为0.00         |
-|    gender    |   string   |        |      |         |  用户性别，仅两种选择：`male`男，`female`女   |
-|   top_left   | tuple/list |        |      |         |            人脸出现位置左上角坐标             |
-|  top_right   | tuple/list |        |      |         |            人脸出现位置右上角坐标             |
-| bottom_left  | tuple/list |        |      |         |            人脸出现位置左下角坐标             |
-| bottom_right | tuple/list |        |      |         |            人脸出现位置右下角坐标             |
+|    Field     |    Type    | Length | Null | Default |                   **Description**                   |
+| :----------: | :--------: | :----: | :--: | :-----: | :-------------------------------------------------: |
+|    result    |  boolean   |        |      |         |    匹配结果，`true`为匹配成功，`false`为匹配失败    |
+|      ID      |   string   |   18   |      |         |      人脸数据id（身份证号），若没找到默认为""       |
+|     age      |    int     |        |      |         |           人脸预测年龄（非人脸真实年龄）            |
+|   liveness   |  boolean   |        |      |         |     活体检测，`true`为真人，`false`为照片等假人     |
+|  threshold   |   float    |        |      |         |           人脸相似度，若没找到默认为0.00            |
+|    gender    |   string   |        |      |         |     用户性别，仅两种选择：`male`男，`female`女      |
+|   top_left   | tuple/list |        |      |         |               人脸出现位置左上角坐标                |
+|  top_right   | tuple/list |        |      |         |               人脸出现位置右上角坐标                |
+| bottom_left  | tuple/list |        |      |         |               人脸出现位置左下角坐标                |
+| bottom_right | tuple/list |        |      |         |               人脸出现位置右下角坐标                |
+|     mask     |  boolean   |        |      |         | **新增字段**，脸部是否有遮罩物，true为有，false为无 |
 
 > **Notice**
 
@@ -2499,6 +2528,8 @@ Please refer to [Global Status Table](#Global Status Table)
 
 | Status |
 | ------ |
+| -101   |
+| -100   |
 | -3     |
 | -2     |
 | -1     |
@@ -2510,6 +2541,112 @@ Please refer to [Global Status Table](#Global Status Table)
 |  100   |    No face authentication    |   人脸信息未认证   |
 |  101   |    No face data in base64    |  图片中无人脸信息  |
 |  102   | Too much face data in base64 | 图片中人脸数据过多 |
+
+## Face - Mask（新增）
+
+> **API Description**
+
+`POST`
+
+此API用于以`base64`为人脸数据判断画面中的人脸是否有脸部遮罩物，成功返回相关信息
+
+**注意**
+
+此API不会判断人脸身份，仅判断脸部有无遮罩物
+
+> **URL**
+
+`https://hotel.lcworkroom.cn/api/face/mask/?token=`
+
+> **URL Param**
+
+| Field |  Type  | Length | Null | Default | **Description** |
+| :---: | :----: | :----: | :--: | :-----: | :-------------: |
+| token | string |   32   |      |         |    用户凭证     |
+
+> **Request Json Text Example**
+
+```python
+{
+    "id":1234,
+    "type":"mask",
+    "subtype":"check",
+    "data":{
+        "base64":"sdfj32...",
+    }
+}
+```
+
+> **Data Param**
+
+| Field  |  Type  | Length | Null | Default | **Description** |
+| :----: | :----: | :----: | :--: | :-----: | :-------------: |
+| base64 | string |        |      |         | 图片base64文本  |
+
+> **Response Success Example**
+
+```python
+{
+    "id": 0, 
+    "status": 0, 
+    "message": "Successful", 
+    "data": {
+        "num": 1, 
+        "list": [
+            {
+                "top_left": [49, 84], 
+                "top_right": [150, 84], 
+                "bottom_left": [49, 208], 
+                "bottom_right": [150, 208], 
+                "result": false
+            }
+        ]
+    }
+}
+```
+
+> **Response Data Param**
+
+|    Field     |    Type    | Length | Null | Default |                **Description**                |
+| :----------: | :--------: | :----: | :--: | :-----: | :-------------------------------------------: |
+|    result    |  boolean   |        |      |         | 匹配结果，`true`为有遮罩物，`false`为无遮罩物 |
+|   top_left   | tuple/list |        |      |         |            人脸出现位置左上角坐标             |
+|  top_right   | tuple/list |        |      |         |            人脸出现位置右上角坐标             |
+| bottom_left  | tuple/list |        |      |         |            人脸出现位置左下角坐标             |
+| bottom_right | tuple/list |        |      |         |            人脸出现位置右下角坐标             |
+
+> **Notice**
+
++ 此API不会判断人脸身份，仅判断脸部有无遮罩物
++ 理论上不会判断失败，但有概率会错误识别，目前测试来看对小像素的物体容易识别失败
++ 识别错误是指将不是人脸的数据识别为人脸数据，且此API会将动漫的人脸也识别为人脸，很迷
+
+> **Response Failed Example**
+
+```python
+{
+    "id": 1234, 
+    "status": -100, 
+    "message": "Missing necessary args", 
+    "data": {}
+}
+```
+
+> **Used Global Status**
+
+Please refer to [Global Status Table](#Global Status Table)
+
+| Status |
+| ------ |
+| -101   |
+| -100   |
+| -3     |
+| -2     |
+| -1     |
+
+> **Local Status**
+
+null
 
 # Map
 

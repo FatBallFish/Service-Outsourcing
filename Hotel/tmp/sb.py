@@ -61,7 +61,7 @@ headers = {"content-type": "application/json"}
 
 # token = "59bc21b4e85cb1a4039802bd635294b9"  # 13750687010
 # token = "f5be3a953ffdfcb1bbe45d4379d05ade"  # 19857160634
-token = "f6846dfa73c22bd5265981601cd66da6"  # 13858181317 艾
+token = "8236f79ea096198bd7e3124a20816a26"  # 13858181317 艾
 # token = "6a6f4be5aecd21636cf407cbaa8874cd"  # 13735866541 梁
 # # Doki - GET模式
 # response = requests.get("http://127.0.0.1:8848/api/user/doki/?token={}".format(token))
@@ -198,7 +198,7 @@ token = "f6846dfa73c22bd5265981601cd66da6"  # 13858181317 艾
 # print(response.text)
 
 # # 人脸查找
-# with open(os.path.join(settings.BASE_DIR, "media", "tmp", "14.jpg"), "rb") as f:
+# with open(os.path.join(settings.BASE_DIR, "media", "tmp", "img6.jpeg"), "rb") as f:
 #     file_data = f.read()
 # # print(file_data)
 # img_base64 = str(base64.b64encode(file_data), "utf-8")
@@ -206,7 +206,7 @@ token = "f6846dfa73c22bd5265981601cd66da6"  # 13858181317 艾
 # data = {"id": 0,
 #         "type": "face",
 #         "subtype": "find",
-#         "data": {"base64": "{}".format(img_base64), "db": -1,"ret_type":0}}
+#         "data": {"base64": "{}".format(img_base64), "db": -1,"ret_type":1}}
 # response = requests.post(url="http://127.0.0.1:8848/api/face/?token={}".format(token), data=json.dumps(data),
 #                          headers=headers)
 # # response = requests.post(url="https://hotel.lcworkroom.cn/api/face/register/", data=json.dumps(data), headers=headers)
@@ -243,6 +243,21 @@ token = "f6846dfa73c22bd5265981601cd66da6"  # 13858181317 艾
 #         "subtype": "get",
 #         "data": {"ID":"33108219991127089X"}}
 # response = requests.post(url="http://127.0.0.1:8848/api/face/?token={}".format(token), data=json.dumps(data),
+#                          headers=headers)
+# # response = requests.post(url="https://hotel.lcworkroom.cn/api/face/register/", data=json.dumps(data), headers=headers)
+# print(response.text)
+
+# # 人脸口罩识别
+# with open(os.path.join(settings.BASE_DIR, "media", "tmp", "14.jpg"), "rb") as f:
+#     file_data = f.read()
+# # print(file_data)
+# img_base64 = str(base64.b64encode(file_data), "utf-8")
+# print("base64:\n{}".format(img_base64))
+# data = {"id": 0,
+#         "type": "mask",
+#         "subtype": "check",
+#         "data": {"base64": "{}".format(img_base64)}}
+# response = requests.post(url="http://127.0.0.1:8848/api/face/mask/?token={}".format(token), data=json.dumps(data),
 #                          headers=headers)
 # # response = requests.post(url="https://hotel.lcworkroom.cn/api/face/register/", data=json.dumps(data), headers=headers)
 # print(response.text)
@@ -437,13 +452,19 @@ token = "f6846dfa73c22bd5265981601cd66da6"  # 13858181317 艾
 #                          headers=headers)
 # print(response.text)
 
-# 寄存柜，获取寄存列表
-data = {"id": 0, "type": "locker", "subtype": "list", "data": {"order_id": 4}}
-response = requests.post(url="http://127.0.0.1:8848/api/locker/info/?token={}".format(token), data=json.dumps(data),
-                         headers=headers)
-print(response.text)
+# # 寄存柜，获取寄存列表
+# data = {"id": 0, "type": "locker", "subtype": "list", "data": {"order_id": 4}}
+# response = requests.post(url="http://127.0.0.1:8848/api/locker/info/?token={}".format(token), data=json.dumps(data),
+#                          headers=headers)
+# print(response.text)
+#
+# # 寄存柜，获取单个寄存信息
+# data = {"id": 0, "type": "locker", "subtype": "get", "data": {"apply_id": 4}}
+# response = requests.post(url="http://127.0.0.1:8848/api/locker/info/?token={}".format(token), data=json.dumps(data),
+#                          headers=headers)
+# print(response.text)
 
-# 寄存柜，获取单个寄存信息
+# 寄存柜，核验预约信息
 data = {"id": 0, "type": "locker", "subtype": "get", "data": {"apply_id": 4}}
 response = requests.post(url="http://127.0.0.1:8848/api/locker/info/?token={}".format(token), data=json.dumps(data),
                          headers=headers)

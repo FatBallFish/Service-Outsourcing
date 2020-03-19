@@ -1,0 +1,44 @@
+[
+  {
+    'class_id': 0,
+    'threshold': 0.9997735619544983,
+    'top_left': (697,
+    125),
+    'top_right': (829,
+    125),
+    'bottom_left': (697,
+    282),
+    'bottom_right': (829,
+    282),
+    'center': (763.0,
+    203.5)
+  },
+  {
+    'class_id': 0,
+    'threshold': 0.9992163181304932,
+    'top_left': (414,
+    81),
+    'top_right': (573,
+    81),
+    'bottom_left': (414,
+    283),
+    'bottom_right': (573,
+    283),
+    'center': (493.5,
+    182.0)
+  },
+  {
+    'class_id': 0,
+    'threshold': 0.9950423240661621,
+    'top_left': (102,
+    135),
+    'top_right': (262,
+    135),
+    'bottom_left': (102,
+    320),
+    'bottom_right': (262,
+    320),
+    'center': (182.0,
+    227.5)
+  }
+]

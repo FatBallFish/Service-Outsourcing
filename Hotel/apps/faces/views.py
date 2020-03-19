@@ -8,9 +8,10 @@ from apps.faces.models import FaceGroup, FaceData
 from apps.realauth.models import RealAuth
 from extral_apps import MD5
 from extral_apps.m_arcface import main as Arcface
+from extral_apps.m_facemask import main as FaceMask
 
 import json, base64
-import os
+import os, math
 
 
 # Create your views here.
@@ -316,6 +317,15 @@ class FaceView(View):
                     # status 103 图片中人脸数据过多
                     return JsonResponse(
                         {"id": id, "status": 103, "message": "Too much face data in base64", "data": {}})
+                # 人脸口罩检验
+                data_list = face_dict["list"]
+                faceMask = FaceMask.FaceMask(file_name)
+                mask_list = faceMask.faceMaskCheck()
+                data_list = self.mergeFaceData(mask_list, data_list)
+                face = data_list[0]
+                if face["mask"] == True:
+                    # status 104 脸部不能有遮罩物
+                    return JsonResponse({"id": id, "status": 104, "message": "No mask on the face", "data": {}})
                 # 信息初始写入 姓名，特征，注册图片
                 Arcface.addFace(path=file_name, name=face_name, ID=face_ID)
                 # 获取性别，人员库等其他信息
@@ -393,6 +403,10 @@ class FaceView(View):
                         ret_type = data["ret_type"]
                     else:
                         ret_type = 0
+                # 人脸口罩检验
+                faceMask = FaceMask.FaceMask(file_name)
+                mask_list = faceMask.faceMaskCheck()
+                data_list = self.mergeFaceData(mask_list, data_list)
                 sample_list = []
                 for face_dict in data_list:
                     ID = face_dict["ID"]
@@ -449,6 +463,10 @@ class FaceView(View):
                     # status 102 图片中人脸数据过多
                     return JsonResponse(
                         {"id": id, "status": 102, "message": "Too much face data in base64", "data": {}})
+                # 人脸口罩检验
+                faceMask = FaceMask.FaceMask(file_name)
+                mask_list = faceMask.faceMaskCheck()
+                data_list = self.mergeFaceData(mask_list, data_list)
                 ret_type = 0
                 if "ret_type" in data.keys():
                     if isinstance(data["ret_type"], str):
@@ -528,6 +546,109 @@ class FaceView(View):
             # status -2 json的value错误。
             return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
 
+    def get(self, request, *args, **kwargs):
+        pass
 
-def get(self, request, *args, **kwargs):
-    pass
+    def mergeFaceData(self, mask_list: list, face_list: list) -> list:
+        face_num = len(face_list)
+        mask_num = len(mask_list)
+        id2class = {0: True, 1: False}
+        if face_num != mask_num:
+            print("人脸数不一致：mask:{},face:{}".format(mask_num, face_num))
+        for mask in mask_list:
+            mask_center = mask["center"]
+            mask_id = mask["class_id"]
+            min_distance = -1
+            face_index = -1
+            for face in face_list:
+                # 先获取序列后再初始化口罩情况，怕修改数值后找不到改项目序列
+                index = face_list.index(face)
+                if "mask" not in face.keys():
+                    face["mask"] = None
+                top_left = face["top_left"]
+                bottom_right = face["bottom_right"]
+                face_center = ((top_left[0] + bottom_right[0]) / 2, (top_left[1] + bottom_right[1]) / 2)
+                distance = (face_center[0] - mask_center[0]) ** 2 + (face_center[1] - mask_center[1]) ** 2
+                distance = math.sqrt(distance)
+                if min_distance != -1:
+                    if distance < min_distance:
+                        min_distance = distance
+                        face_index = index
+                else:
+                    min_distance = distance
+                    face_index = index
+            if face_index != -1:
+                face = face_list[face_index]
+                face["mask"] = id2class[mask_id]
+        return face_list
+
+
+class FaceMaskView(View):
+    def post(self, request, *args, **kwargs):
+        try:
+            token = request.GET.get("token")
+            print("token:", token)
+        except Exception as e:
+            print(e)
+            print("Missing necessary args")
+            # log_main.error("Missing necessary agrs")
+            # status -100 缺少必要的参数
+            return JsonResponse({"id": -1, "status": -100, "message": "Missing necessary args", "data": {}})
+        result, user = Doki2(token=token)
+        if result is False:
+            return JsonResponse({"id": -1, "status": -101, "message": "Error Token", "data": {}})
+        try:
+            data = dict(json.loads(request.body))
+            print(data)
+        except:
+            json_dict = {"id": -1, "status": -1, "message": "Error JSON key", "data": {}}
+            return JsonResponse(json_dict)
+        if "id" in data.keys():
+            id = data["id"]
+        else:
+            id = -1
+            # 判断指定所需字段是否存在，若不存在返回status -1 json。
+        for key in ["type", "subtype", "data"]:
+            if key not in data.keys():
+                # status -1 json的key错误。
+                json_dict = {"id": id, "status": -1, "message": "Error JSON key", "data": {}}
+                return JsonResponse(json_dict)
+        type = data["type"]
+        subtype = data["subtype"]
+        data = dict(data["data"])
+        if type == "mask":
+            if subtype == "check":
+                if "base64" not in data.keys():
+                    # status -3 json的value错误。
+                    return JsonResponse({"id": id, "status": -3, "message": "Error data key", "data": {}})
+                img_base64 = str(data["base64"])
+                base64_head_index = img_base64.find(";base64,")
+                if base64_head_index != -1:
+                    print("进行了替换")
+                    img_base64 = img_base64.partition(";base64,")[2]
+                # print("-------接收到数据-------\n", img_base64, "\n-------数据结构尾-------")
+                img_type = "face"
+                # if "type" in data.keys():
+                #     img_type = data["type"]
+                img_file = base64.b64decode(img_base64)
+                pic_name = MD5.md5_bytes(img_file) + "." + img_type
+                file_name = os.path.join(settings.BASE_DIR, "media", "tmp", pic_name)
+                # todo 优化本地存储性能
+                with open(file_name, "wb") as f:
+                    f.write(img_file)
+                faceMask = FaceMask.FaceMask(path=file_name)
+                data_list = faceMask.faceMaskCheck()
+                id2class = {0: True, 1: False}
+                for data in data_list:
+                    result = id2class[data["class_id"]]
+                    del data["class_id"]
+                    del data["center"]
+                    data["result"] = result
+                return JsonResponse({"id": id, "status": 0, "message": "Successful",
+                                     "data": {"num": len(data_list), "list": data_list}})
+            else:
+                # status -2 json的value错误。
+                return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})
+        else:
+            # status -2 json的value错误。
+            return JsonResponse({"id": id, "status": -2, "message": "Error JSON value", "data": {}})

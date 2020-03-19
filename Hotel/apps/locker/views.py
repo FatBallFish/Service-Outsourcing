@@ -5,7 +5,7 @@ from django.db.models import Q
 
 from apps.tokens.models import Doki2
 from apps.users.models import Users
-from apps.guests.models import Orders
+from apps.guests.models import Orders, GuestRoom
 from apps.rooms.models import Hotel
 from apps.locker.models import Locker, LockerOrder
 from apps.msg.models import Messages, MessageText
@@ -95,6 +95,7 @@ class LockerApplyView(View):
                                                                             order=order)
                 locker.used = True
                 locker.save()
+                GuestRoom.objects.filter(order=order).update(if_locker=1)
                 msg_result = self.sendApplyMessage(user=user, locker_order=locker_order)
                 return JsonResponse({"id": id, "status": 0, "message": "Successful",
                                      "data": {"apply_id": locker_order.id, "status": locker_order.status,

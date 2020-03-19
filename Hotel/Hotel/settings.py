@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "apps.realauth.apps.RealauthConfig",
     "apps.msg.apps.MsgConfig",
     "apps.locker.apps.LockerConfig",
+    "apps.passengerFlow.apps.PassengerflowConfig",
 ]
 
 MIDDLEWARE = [

@@ -24,6 +24,9 @@ from Hotel import settings
 from extral_apps import MD5
 from apps.users.models import Users
 from apps.faces.models import FaceData, FaceGroup
+from apps.passengerFlow.models import PassengerFace
+
+from django.db.models import Q
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.DEBUG)
@@ -368,6 +371,25 @@ class FaceProcess:
                 _logger.info("从 \"全部人员库\" 中重加载了 %d 个特征值" % (count))
         return count
 
+    def load_passenger_features(self):
+        """
+        重载客流分析数据库
+
+        :return:
+        """
+        count = 0
+        face_list = []
+        self._features.clear()
+        face_list = PassengerFace.objects.exclude(sign=None)
+        for face_data in face_list:
+            ID = face_data.ID
+            name = face_data.name
+            feature = base64.b64decode(face_data.sign)
+            self._features[ID] = feature
+            count += 1
+        _logger.info("从 客流人员库 中重加载了 %d 个特征值" % (count))
+        return count
+
     def add_features(self, path_name: str, ID: str) -> int:
         """
         将本地文件夹或者本地图片所有用户的特征值添加人脸数据库
@@ -479,6 +501,16 @@ class FaceProcess:
         _logger.debug("识别失败，与最像的 %s 的相似度 %.2f" % (opt_ID, max_threshold))
         # face_info.updated_flags[0] = True
         return "", 0.0
+
+    def face_compare_only(self, feature1: bytes, feature2: bytes) -> float:
+        max_threshold = 0.0
+        opt_ID = ""
+        max_threshold = self._arcface.compare_feature(feature1, feature2)
+
+        if max_threshold > 0.8:
+            _logger.debug("识别成功，相似度 %.2f" % (max_threshold))
+            return max_threshold
+        return 0.0
 
     def __enter__(self):
         return self

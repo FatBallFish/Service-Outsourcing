@@ -136,6 +136,7 @@ class GuestRoom(models.Model):
     check_out_time = models.DateTimeField(verbose_name="退房时间", blank=True, null=True)
     order = models.ForeignKey(verbose_name="订单", to=Orders, on_delete=models.CASCADE, null=True)
     name = models.CharField(verbose_name="标题", max_length=30)
+    if_locker = models.IntegerField(verbose_name="是否预订寄存柜",blank=True, null=True)
 
     class Meta:
         managed = False

@@ -221,6 +221,11 @@ def reload_features(db: int = -1, user=None):
 
 
 @timer(output=_logger.info)
+def load_passenger_features():
+    face_process.load_passenger_features()
+
+
+@timer(output=_logger.info)
 def face_compare(feature: bytes):
     """
     仅通过人脸特征进行人脸查找匹配
@@ -230,6 +235,12 @@ def face_compare(feature: bytes):
     """
     opt_ID, max_threshold = face_process.face_compare(feature)
     return opt_ID, max_threshold
+
+
+@timer(output=_logger.info)
+def face_compare_only(feature1: bytes, feature2: bytes) -> float:
+    max_threshold = face_process.face_compare_only(feature1, feature2)
+    return max_threshold
 
 
 @timer(output=_logger.info)
