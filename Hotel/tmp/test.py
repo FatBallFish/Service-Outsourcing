@@ -1,6 +1,8 @@
 import time
-from datetime import datetime
-print(datetime.now())
-print(time.time())
-print(1581952914164)
-print(time.mktime(time.strptime("2016-07-08", "%Y-%m-%d")))
+from datetime import datetime, timedelta
+count_dict = {}
+for j in range(24):
+    count_dict[j] = j
+# count_dict = {0: 1, 5: 3, 8: 4}
+data_list = [count_dict[x] for x in count_dict.keys()]
+print(data_list)

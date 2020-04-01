@@ -1,12 +1,16 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
+from import_export.admin import ImportExportActionModelAdmin, ImportExportModelAdmin
+from apps.guests.resources import GuestsResource, GuestRoomResource, VisitorResource, GuestVisitorResource, \
+    OrdersResource
+
 from apps.guests.models import Guests, GuestRoom, Visitor, GuestVisitor, Orders
 
 
 # Register your models here.
-# todo 全部重改
-class GuestsAdmin(admin.ModelAdmin):
+@admin.register(Guests)
+class GuestsAdmin(ImportExportActionModelAdmin):
     # 编辑界面
     fieldsets = (
         ("实名信息", {'fields': (
@@ -32,9 +36,11 @@ class GuestsAdmin(admin.ModelAdmin):
     list_filter = (
         'real_auth__ID', 'real_auth__name', 'real_auth__gender', 'real_auth__birthday', 'user__phone')  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
+    resource_class = GuestsResource
 
 
-class GuestRoomAdmin(admin.ModelAdmin):
+@admin.register(GuestRoom)
+class GuestRoomAdmin(ImportExportActionModelAdmin):
     # 编辑界面
     fieldsets = (
         ("来宾信息", {'fields': ('guest', "guest_ID", "guest_name", "guest_gender", "guest_age", "guest_phone")}),
@@ -79,9 +85,11 @@ class GuestRoomAdmin(admin.ModelAdmin):
     list_filter = (
         'guest__real_auth__name', 'room__hotel', 'room', 'status', 'check_in_time', 'check_out_time')  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
+    resource_class = GuestRoomResource
 
 
-class VisitorAdmin(admin.ModelAdmin):
+@admin.register(Visitor)
+class VisitorAdmin(ImportExportActionModelAdmin):
     # 编辑界面
     fieldsets = (
         ("实名信息", {'fields': (
@@ -106,9 +114,11 @@ class VisitorAdmin(admin.ModelAdmin):
     list_filter = (
         'real_auth__ID', 'real_auth__name', 'real_auth__gender', 'real_auth__birthday', 'user__phone')  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
+    resource_class = VisitorResource
 
 
-class GuestVisitorAdmin(admin.ModelAdmin):
+@admin.register(GuestVisitor)
+class GuestVisitorAdmin(ImportExportActionModelAdmin):
     # 编辑界面
     fieldsets = (
         ("预约基本信息", {'fields': (
@@ -144,9 +154,11 @@ class GuestVisitorAdmin(admin.ModelAdmin):
         'status')  # 列表搜索字段
     list_filter = search_fields  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
+    resource_class = GuestVisitorResource
 
 
-class OrderAdmin(admin.ModelAdmin):
+@admin.register(Orders)
+class OrdersAdmin(ImportExportActionModelAdmin):
     # 编辑界面
     fieldsets = (
         ("订单基本信息",
@@ -191,10 +203,4 @@ class OrderAdmin(admin.ModelAdmin):
         'status')  # 列表搜索字段
     list_filter = search_fields  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
-
-
-admin.site.register(Guests, GuestsAdmin)
-admin.site.register(GuestRoom, GuestRoomAdmin)
-admin.site.register(Visitor, VisitorAdmin)
-admin.site.register(GuestVisitor, GuestVisitorAdmin)
-admin.site.register(Orders, OrderAdmin)
+    resource_class = OrdersResource

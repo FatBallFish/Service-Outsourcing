@@ -1,9 +1,14 @@
 from django.contrib import admin
+
+from import_export.admin import ImportExportActionModelAdmin, ImportExportModelAdmin
+from apps.rooms.resource import RoomResource, HotelResource, AmbitusResource
+
 from apps.rooms.models import Hotel, Room, HotelFaceGroup, Ambitus
 
 
 # Register your models here.
-class HotelAdmin(admin.ModelAdmin):
+@admin.register(Hotel)
+class HotelAdmin(ImportExportActionModelAdmin):
     # 编辑界面
     fieldsets = (
         ("酒店信息", {'fields': ('name', "content", "location", "imgs", "lon", "lat", "province", "city", "district")}),)
@@ -16,9 +21,11 @@ class HotelAdmin(admin.ModelAdmin):
     search_fields = ('name', 'content', 'location', "province", "city")  # 列表搜索字段
     list_filter = search_fields  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
+    resource_class = HotelResource
 
 
-class RoomAdmin(admin.ModelAdmin):
+@admin.register(Room)
+class RoomAdmin(ImportExportActionModelAdmin):
     # 编辑界面
     fieldsets = (
         ("酒店信息", {'fields': ('hotel', 'hotel_name', 'hotel_content', 'hotel_location', 'hotel_lon', 'hotel_lat')}),
@@ -35,8 +42,10 @@ class RoomAdmin(admin.ModelAdmin):
     search_fields = ('hotel', 'number', 'name', "content", "room_type_name", "room_type_content")  # 列表搜索字段
     list_filter = ('hotel', 'floor', 'number', 'name', "content", "room_type_name", "room_type_content")  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
+    resource_class = RoomResource
 
 
+@admin.register(HotelFaceGroup)
 class HotelFaceGroupAdmin(admin.ModelAdmin):
     # 编辑界面
     fieldsets = (
@@ -56,7 +65,8 @@ class HotelFaceGroupAdmin(admin.ModelAdmin):
     list_per_page = 10  # 列表每页最大显示数量，默认100
 
 
-class AmbitusAdmin(admin.ModelAdmin):
+@admin.register(Ambitus)
+class AmbitusAdmin(ImportExportActionModelAdmin):
     # 编辑界面
     fieldsets = (
         ("周边基本信息", {'fields': ('name', 'img', 'tabs')}),
@@ -71,11 +81,4 @@ class AmbitusAdmin(admin.ModelAdmin):
     search_fields = ('name', 'tabs', 'city')  # 列表搜索字段
     list_filter = search_fields  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
-
-
-# class
-
-admin.site.register(Hotel, HotelAdmin)
-admin.site.register(Room, RoomAdmin)
-admin.site.register(HotelFaceGroup, HotelFaceGroupAdmin)
-admin.site.register(Ambitus, AmbitusAdmin)
+    resource_class = AmbitusResource

@@ -1,10 +1,14 @@
 from django.contrib import admin
 
-# Register your models here.
+from import_export.admin import ImportExportActionModelAdmin, ImportExportModelAdmin
+from apps.realauth.resource import RealAuthResource
+
 from apps.realauth.models import RealAuth
 
 
-class RealAuthAdmin(admin.ModelAdmin):
+# Register your models here.
+@admin.register(RealAuth)
+class RealAuthAdmin(ImportExportActionModelAdmin):
     fieldsets = (
         ("证件信息",
          {'fields': ('id_type', 'ID', 'name', 'gender', 'nation', 'birthday', 'address')}),
@@ -17,6 +21,4 @@ class RealAuthAdmin(admin.ModelAdmin):
     search_fields = ('ID', "name", "address")  # 列表搜索字段
     list_filter = ("id_type", "gender", "nation", "birthday")  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
-
-
-admin.site.register(RealAuth, RealAuthAdmin)
+    resource_class = RealAuthResource

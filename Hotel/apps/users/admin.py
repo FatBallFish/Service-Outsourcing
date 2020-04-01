@@ -1,11 +1,15 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
+from import_export.admin import ImportExportActionModelAdmin, ImportExportModelAdmin
+from apps.users.resource import UsersResource
+
 from apps.users.models import Users
 
 
 # Register your models here.
-class UsersAdmin(admin.ModelAdmin):
+@admin.register(Users)
+class UsersAdmin(ImportExportActionModelAdmin):
     fieldsets = (
         ("基本信息",
          {'fields': (
@@ -40,16 +44,4 @@ class UsersAdmin(admin.ModelAdmin):
         return format_html('<img src="/api/pic/get/users?name={}" style="width:32px;height:auto">', users.username)
 
     read_img_small.short_description = "用户头像"
-
-
-class AdminSite(admin.AdminSite):
-    site_title = "酒店视觉AI"  # 页面显示标题
-    site_header = "酒店视觉AI 后台管理"  # 页面头部标题
-
-
-# admin.site.site_title = "酒店视觉AI 后台管理"
-# admin.site.site_header = "酒店视觉AI"
-
-admin.site = AdminSite()
-
-admin.site.register(Users, UsersAdmin)
+    resource_class = UsersResource

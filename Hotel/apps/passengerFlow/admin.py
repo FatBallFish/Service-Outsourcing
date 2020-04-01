@@ -1,10 +1,14 @@
 from django.contrib import admin
 
+from import_export.admin import ImportExportActionModelAdmin, ImportExportModelAdmin
+from apps.passengerFlow.resources import PassengerFlowResource, PassengerFaceResource
+
 from apps.passengerFlow.models import PassengerFlow, PassengerFace
 
 
 # Register your models here.
-class PassengerFlowAdmin(admin.ModelAdmin):
+@admin.register(PassengerFlow)
+class PassengerFlowAdmin(ImportExportActionModelAdmin):
     # 编辑界面
     fieldsets = (
         ("基本信息", {'fields': ('id',)}),
@@ -16,8 +20,7 @@ class PassengerFlowAdmin(admin.ModelAdmin):
     # 显示界面
     # fields 和 fieldsets不能共存
     list_display = (
-        'id', 'face_ID', 'face_name', 'face_age', 'face_gender', 'face_sign', 'face_mask', 'enter_time',
-        'exit_time', 'hotel',
+        'id', 'face_ID', 'face_name', 'face_age', 'face_gender', 'face_mask', 'enter_time', 'exit_time', 'hotel',
         'location')  # 列表中显示的字段
     list_display_links = list_display  # 列表中可点击跳转的字段
 
@@ -26,9 +29,11 @@ class PassengerFlowAdmin(admin.ModelAdmin):
         'face__ID', 'face__name', 'face__age', 'face__gender', 'face__mask', 'enter_time', 'exit_time', 'hotel',
         'location')  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
+    resource_class = PassengerFlowResource
 
 
-class PassengerFaceAdmin(admin.ModelAdmin):
+@admin.register(PassengerFace)
+class PassengerFaceAdmin(ImportExportActionModelAdmin):
     # 编辑界面
     fieldsets = (
         ("人员信息", {'fields': ('ID', 'name', 'age', 'gender', 'sign', 'mask')}),
@@ -42,7 +47,6 @@ class PassengerFaceAdmin(admin.ModelAdmin):
     search_fields = ('ID', 'name', 'age', 'gender', 'mask')  # 列表搜索字段
     list_filter = ('ID', 'name', 'age', 'gender', 'mask')  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
+    resource_class = PassengerFaceResource
 
 
-admin.site.register(PassengerFlow, PassengerFlowAdmin)
-admin.site.register(PassengerFace, PassengerFaceAdmin)

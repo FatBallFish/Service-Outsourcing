@@ -26,11 +26,16 @@ from apps.users.views import UserLoginView, UserRegisterView, UserInfoView, Capt
     UserSearchView
 from apps.realauth.views import RealAuthView, DistrictView
 from apps.devices.views import DeviceLoginView, DeviceRegisterView, DeviceHotelListView, DeviceFaceFeatureView, \
-    DeviceListView, DeviceLockerView,DevicePassengerFlowView
+    DeviceListView, DeviceLockerView, DevicePassengerFlowView
 from apps.msg.views import MsgView
 from apps.pics.views import PicView
 from apps.locker.views import LockerApplyView, LockerInfoView
+from apps.passengerFlow.views import NewOldTableView, WeekTableView, AgeTableView, FlowSumCardView, SumFlowTableView
+
 import os
+
+admin.site.site_title = "酒店视觉AI"
+admin.site.site_header = "酒店视觉AI 后台管理"
 
 API_ROOT = settings.API_ROOT
 urlpatterns = [
@@ -63,5 +68,11 @@ urlpatterns = [
     path(API_ROOT + "msg/", csrf_exempt(MsgView.as_view()), name="msg"),
     path(API_ROOT + "locker/apply/", csrf_exempt(LockerApplyView.as_view()), name="locker_apply"),
     path(API_ROOT + "locker/info/", csrf_exempt(LockerInfoView.as_view()), name="locker_info"),
+
+    path(API_ROOT + "table/new/", csrf_exempt(NewOldTableView.as_view()), name="table_new"),
+    path(API_ROOT + "table/week/", csrf_exempt(WeekTableView.as_view()), name="table_week"),
+    path(API_ROOT + "table/age/", csrf_exempt(AgeTableView.as_view()), name="table_age"),
+    path(API_ROOT + "table/flow_sum/", csrf_exempt(SumFlowTableView.as_view()), name="table_flow_sum"),
+    path(API_ROOT + "card/flow_sum/", csrf_exempt(FlowSumCardView.as_view()), name="card_flow_sum"),
 
 ]

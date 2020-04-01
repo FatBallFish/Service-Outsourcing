@@ -1,7 +1,6 @@
 from django.db import models
 from datetime import datetime
 from django.utils.html import format_html
-
 from apps.rooms.models import Hotel
 from apps.users.models import BaseModel
 

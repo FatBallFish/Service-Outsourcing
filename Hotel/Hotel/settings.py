@@ -29,7 +29,9 @@ ALLOWED_HOSTS = ["hotel.lcworkroom.cn", "lcworkroom.cn", "zustjinzhu.com", "127.
 # Application definition
 
 INSTALLED_APPS = [
+    'simplepro',
     'simpleui',
+    'import_export',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -58,6 +60,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'simplepro.middlewares.SimpleMiddleware',
 ]
 
 ROOT_URLCONF = 'Hotel.urls'
@@ -72,6 +76,7 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
+                'django.template.context_processors.static',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
@@ -138,6 +143,9 @@ SIMPLEUI_DEFAULT_THEME = 'admin.lte.css'
 SIMPLEUI_HOME_INFO = False  # 服务器信息,右侧simple ui主页
 SIMPLEUI_ANALYSIS = False
 
+# simplepro
+SIMPLEUI_STATIC_OFFLINE = False
+
 # HP-socket
 HP_SOCKET_IP = "118.25.98.76"
 HP_SOCKET_PORT = 9527
@@ -178,12 +186,13 @@ AUTH_USER_MODEL = "users.Users"
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
-# AUTH_USER_MODEL = "users.User"
-# STATIC_ROOT = os.path.join(BASE_DIR, "static")
+
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static"),
-]
+# STATICFILES_DIRS = [
+#     os.path.join(BASE_DIR, "static"),
+# ]
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
+# print(STATIC_ROOT)
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")  # 注意:这里配置os的时候,不像配置static的时候要[],这里不需要[]
 MEDIA_URL = "/media/"
 API_ROOT = 'api/'

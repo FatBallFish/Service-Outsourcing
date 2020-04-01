@@ -1,0 +1,118 @@
+{% load i18n static simpletags %}
+<link rel="stylesheet" href="{% static 'admin/simplepro/css/home.css' %}">
+<script type="text/javascript" src="{% static 'admin/simplepro/echarts/echarts.min.js' %}"></script>
+
+<script src="https://cdn.bootcss.com/axios/0.19.2/axios.js"></script>
+<script type="text/javascript" src="{% static '/admin/simpleui-x/js/vue.min.js' %}"></script>
+<script type="text/javascript" src="{% static '/admin/simplepro/js/chart.js' %}"></script>
+{#<script src="/static/admin/js/home.js"></script>#}
+<script>
+    window.onload = function () {
+        console.log("card页面");
+        {#累计客流量显示#}
+        var span_flow_list = document.getElementsByClassName("flow_sum");
+        axios
+            .post("/api/card/flow_sum/", {
+                param: 1,
+            })
+            .then(function (res) {
+                let num = res.data.num;
+                console.log("res:", res.data);
+                console.log("num:", num.toString());
+                console.log(span_flow_list);
+                console.log("length", span_flow_list.length);
+                var span_flow = span_flow_list[0];
+                console.log('span', span_flow);
+                span_flow.innerText = num.toString();
+                {#for (var span_flow of span_flow_list) {#}
+                {#    console.log('span',span_flow);#}
+                {#    span_flow.innerText = num.toString();#}
+
+
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+
+        console.log("hello pro");
+        {#常新客比例统计#}
+        app.option_new = {};
+        axios
+            .post("/api/table/new/", {
+                param: 1,
+            })
+            .then(function (res) {
+                app.option_new = res.data;
+                console.log("1", res.data);
+                app.$forceUpdate();
+                console.log("2", res.data);
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+        {#周统计表#}
+        app.option_week = {};
+        axios
+            .post("/api/table/week/", {
+                param: 1,
+            })
+            .then(function (res) {
+                app.option_week = res.data;
+                console.log("1", res.data);
+                app.$forceUpdate();
+                console.log("2", res.data);
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+        {#年龄统计表#}
+        app.option_age = {};
+        axios
+            .post("/api/table/age/", {
+                param: 1,
+            })
+            .then(function (res) {
+                app.option_age = res.data;
+                console.log("1", res.data);
+                app.$forceUpdate();
+                console.log("2", res.data);
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+        app.option_flow_sum = {};
+        axios
+            .post("/api/table/flow_sum/", {
+                param: 1,
+            })
+            .then(function (res) {
+                app.option_flow_sum = res.data;
+                console.log("1", res.data);
+                app.$forceUpdate();
+                console.log("2", res.data);
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+    };
+
+</script>
+<div class="home-body">
+
+    {% block quick %}
+        {% include 'admin/parts/quick.html' %}
+    {% endblock %}
+{#    {% block chart_cards %}#}
+{#        {% include 'admin/parts/charts_cards.html' %}#}
+{#    {% endblock %}#}
+
+    {% block line_chart %}
+        {% include 'admin/parts/line_chart.html' %}
+    {% endblock %}
+
+    {#    <echarts :option="app.option1" style="width: 100%;height: 300px"></echarts>#}
+    <div style="height: 80px"></div>
+
+
+</div>
+<el-backtop target=".home-body"></el-backtop>

@@ -1,11 +1,14 @@
 from django.contrib import admin
 
+from import_export.admin import ImportExportModelAdmin, ImportExportActionModelAdmin
+from apps.locker.resource import LockerOrderResource, LockerResource
+
 from apps.locker.models import Locker, LockerOrder
 
 
 # Register your models here.
-
-class LockerAdmin(admin.ModelAdmin):
+@admin.register(Locker)
+class LockerAdmin(ImportExportActionModelAdmin):
     # 编辑界面
     fieldsets = (
         ("使用信息", {'fields': ('id', 'index', 'num', 'available', 'used', 'add_time')}),
@@ -21,9 +24,11 @@ class LockerAdmin(admin.ModelAdmin):
     # search_fields = ()  # 列表搜索字段
     list_filter = ('hotel__name', 'index', 'num', 'available', 'used', 'add_time')  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
+    resource_class = LockerResource
 
 
-class LockerOrderAdmin(admin.ModelAdmin):
+@admin.register(LockerOrder)
+class LockerOrderAdmin(ImportExportActionModelAdmin):
     # 编辑界面
     fieldsets = (
         ("基本信息", {'fields': ('id', 'status', 'add_time', 'expire_time')}),
@@ -44,7 +49,4 @@ class LockerOrderAdmin(admin.ModelAdmin):
         'user__username', 'locker', 'status', 'add_time')  # 列表搜索字段
     list_filter = search_fields  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
-
-
-admin.site.register(Locker, LockerAdmin)
-admin.site.register(LockerOrder, LockerOrderAdmin)
+    resource_class = LockerOrderResource

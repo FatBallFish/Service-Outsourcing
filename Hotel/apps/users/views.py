@@ -32,6 +32,7 @@ Arcface.Initialize(False)
 HPSocket.Initialize(settings.BASE_DIR)
 FaceMask.Initialize(settings.BASE_DIR)
 
+
 def createToken(username: str, time_int: float) -> str:
     time_now = int(time_int)
     token = MD5.md5(username + str(time_now), "Hotel")
@@ -96,11 +97,15 @@ class UserLoginView(View):
                     json_dict = {"id": id, "status": 102, "message": "Error password", "data": {}}
                     return JsonResponse(json_dict)
 
-                # 删除过期及多余的token
-                Tokens.objects.filter(expire_time__lt=datetime.now()).delete()
-                token_list = Tokens.objects.filter(user=user).order_by("-add_time")[10:]
-                for r_token in token_list:
-                    Tokens.objects.filter(token=r_token.token).delete()
+                # 删除过期及多余的短效token
+                # todo 修改了token处理机制
+                lt_time = datetime.now()
+                Tokens.objects.filter(expire_time__lt=lt_time).exclude(enduring=True).delete()
+                Tokens.objects.filter(user=user).order_by("-add_time")[10:].delete()
+                # token_list = Tokens.objects.filter(user=user).order_by("-add_time")[10:]
+                # for r_token in token_list:
+                #     Tokens.objects.filter(token=r_token.token).delete()
+
                 # 创建token并返回
                 time_now = time.time()
                 token = createToken(username, time_now)

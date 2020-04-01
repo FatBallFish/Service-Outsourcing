@@ -1,10 +1,14 @@
 from django.contrib import admin
+
+from import_export.admin import ImportExportActionModelAdmin, ImportExportModelAdmin
+from apps.devices.resource import DeviceResource, DeviceGroupResource
+
 from apps.devices.models import Device, DeviceGroup
 
 
 # Register your models here.
-
-class DeviceAdmin(admin.ModelAdmin):
+@admin.register(Device)
+class DeviceAdmin(ImportExportActionModelAdmin):
     fieldsets = (
         ("设备信息", {'fields': ('device_id', 'device_name', 'device_content', 'hotel', 'password')}),
     )
@@ -16,9 +20,11 @@ class DeviceAdmin(admin.ModelAdmin):
     search_fields = ('device_id', 'device_name', 'device_content')  # 列表搜索字段
     list_filter = ('device_id', 'device_name', 'device_content', 'is_online')  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
+    resource_class = DeviceResource
 
 
-class DeviceGroupAdmin(admin.ModelAdmin):
+@admin.register(DeviceGroup)
+class DeviceGroupAdmin(ImportExportActionModelAdmin):
     fieldsets = (
         ("设备-人员库绑定信息", {'fields': ('device', 'faces_group')}),
     )
@@ -30,6 +36,7 @@ class DeviceGroupAdmin(admin.ModelAdmin):
     search_fields = ('device__device_name', 'faces_group__name')  # 列表搜索字段
     list_filter = search_fields  # 列表筛选字段
     list_per_page = 10  # 列表每页最大显示数量，默认100
+    resource_class = DeviceGroupResource
 
 
 # class DeviceUserAdmin(admin.ModelAdmin):
@@ -46,6 +53,3 @@ class DeviceGroupAdmin(admin.ModelAdmin):
 #     list_per_page = 10  # 列表每页最大显示数量，默认100
 
 
-admin.site.register(Device, DeviceAdmin)
-admin.site.register(DeviceGroup, DeviceGroupAdmin)
-# admin.site.register(DeviceUser, DeviceUserAdmin)

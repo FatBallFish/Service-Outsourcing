@@ -1,0 +1,58 @@
+{% load i18n static simpletags sptags %}
+<el-header class="navbar" style="font-size: 12px;padding: 10px;height: auto">
+    <div class="float-wrap">
+        <div class="left">
+            <el-button v-waves circle :icon="!fold?'el-icon-s-fold':'el-icon-s-unfold'" style="border: none"
+                       @click="foldClick()"></el-button>
+            <el-breadcrumb v-if="!mobile" style="display: inline-block;" separator="/">
+                {% verbatim myclode %}
+                    <el-breadcrumb-item><i :class="menus[0].icon"
+                                           :key="menus[0].name"></i>{{ menus[0].name }}
+                    </el-breadcrumb-item>
+                    <el-breadcrumb-item v-for="item in breadcrumbs"
+                                        :key="item">
+                        <span :class="getIcon(item.name,item.icon)"></span>
+                        <span v-text="item.name"></span>
+                    </el-breadcrumb-item>
+                {% endverbatim myclode %}
+            </el-breadcrumb>
+        </div>
+
+        <div class="right">
+            <search :data="menus"></search>
+            <timeline-btn></timeline-btn>
+
+           <el-button :icon="!this.zoom?'el-icon-zoom-in':'el-icon-zoom-out'"
+                       @click="goZoom()" circle></el-button>
+            <el-dropdown>
+                <el-button v-waves>
+                    <i class="el-icon-user"></i>
+                    {% get_display_name %}
+                    <i class="el-icon-arrow-down el-icon--right"></i>
+                </el-button>
+
+                    <el-dropdown-menu slot="dropdown">
+
+                        <el-dropdown-item icon="el-icon-house" @click.native="goIndex('{{ 'SIMPLEUI_INDEX'|get_config }}')">查看主页</el-dropdown-item>
+                        {% if 'SIMPLEPRO_INFO'|get_config != False %}
+                            <el-dropdown-item icon="el-icon-bank-card" @click.native="openTab({icon:'el-icon-bank-card',name:'查看授权',url:'/simplepro/info/'})">查看授权</el-dropdown-item>
+                        {% endif %}
+                        <el-popover
+                            placement="left-start"
+                            content="页面显示错乱的时候可以选择重置页面缓存数据。"
+                            width="50"
+                            trigger="hover">
+                                    <el-dropdown-item slot="reference" icon="el-icon-delete" @click.native="clearCache()">重置页面</el-dropdown-item>
+                          </el-popover>
+                        {% verbatim mycode %}
+                            <el-dropdown-item v-waves icon="far fa-edit" @click.native="changePassword()" divided>{{ language.change_password }}</el-dropdown-item>
+                            <el-dropdown-item icon="el-icon-close" @click.native="logout()" divided>{{ language.logout }}</el-dropdown-item>
+                        {% endverbatim mycode %}
+                    </el-dropdown-menu>
+            </el-dropdown>
+            {% verbatim mycode %}
+                <el-button icon="el-icon-more-outline" @click="themeDialogVisible=true" v-waves circle></el-button>
+            {% endverbatim mycode %}
+        </div>
+    </div>
+</el-header>

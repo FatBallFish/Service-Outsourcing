@@ -464,8 +464,14 @@ token = "8236f79ea096198bd7e3124a20816a26"  # 13858181317 艾
 #                          headers=headers)
 # print(response.text)
 
+# # 寄存柜，核验预约信息
+# data = {"id": 0, "type": "locker", "subtype": "get", "data": {"apply_id": 4}}
+# response = requests.post(url="http://127.0.0.1:8848/api/locker/info/?token={}".format(token), data=json.dumps(data),
+#                          headers=headers)
+# print(response.text)
+
 # 寄存柜，核验预约信息
 data = {"id": 0, "type": "locker", "subtype": "get", "data": {"apply_id": 4}}
-response = requests.post(url="http://127.0.0.1:8848/api/locker/info/?token={}".format(token), data=json.dumps(data),
+response = requests.post(url="http://127.0.0.1:8848/api/table/test/", data=json.dumps(data),
                          headers=headers)
 print(response.text)
