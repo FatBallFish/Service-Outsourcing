@@ -15,7 +15,7 @@ et-xmlfile==1.0.1
 freetype-py==2.1.0.post1
 future==0.18.2
 HPSocket==0.9.3
-httplib2==0.15.0
+httplib2==0.18.0
 idna==2.8
 jdcal==1.4.1
 MarkupPy==1.14
