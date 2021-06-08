@@ -24,7 +24,7 @@ numpy==1.18.1
 odfpy==1.4.0
 opencv-python==4.1.2.30
 openpyxl==3.0.2
-Pillow==7.0.0
+Pillow==8.2.0
 PyMySQL==0.9.3
 pytz==2019.3
 PyYAML==5.3
